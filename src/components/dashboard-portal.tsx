@@ -179,41 +179,45 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
           )}
 
           {activeTab === "cement-load" && (
-            <CementLoadView 
-              cementLoads={cementLoads} 
+            <CementLoadView
+              cementLoads={cementLoads}
               onRefresh={refreshAllStates}
               onCreateCementLoad={createCementLoadAction}
               onUpdateCementLoad={updateCementLoadAction}
               onDeleteCementLoad={deleteCementLoadAction}
+              onNavigate={setActiveTab}
             />
           )}
 
           {activeTab === "entry" && (
-            <EntryView 
-              entries={entries} 
+            <EntryView
+              entries={entries}
               onRefresh={refreshAllStates}
               onCreateEntry={createEntryAction}
               onUpdateEntry={updateEntryAction}
               onDeleteEntry={deleteEntryAction}
+              onNavigate={setActiveTab}
             />
           )}
 
           {activeTab === "stock-register" && (
-            <StockRegisterView 
+            <StockRegisterView
               stockItems={stockRegister}
               onRefresh={refreshAllStates}
               onUpdateStockItem={updateStockRegisterItemAction}
+              onNavigate={setActiveTab}
             />
           )}
 
           {activeTab === "materials-used" && (
-            <MaterialsUsedView 
-              entries={entries} 
-              siteMaterials={siteMaterials} 
+            <MaterialsUsedView
+              entries={entries}
+              siteMaterials={siteMaterials}
               onRefresh={refreshAllStates}
               onCreateSiteMaterial={createSiteMaterialAction}
               onUpdateSiteMaterial={updateSiteMaterialAction}
               onDeleteSiteMaterial={deleteSiteMaterialAction}
+              onNavigate={setActiveTab}
             />
           )}
 
@@ -229,23 +233,25 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
           )}
 
           {activeTab === "tar-load" && (
-            <TarLoadView 
-              tarLoads={tarLoads} 
+            <TarLoadView
+              tarLoads={tarLoads}
               onRefresh={refreshAllStates}
               onCreateTarLoad={createTarLoadAction}
               onUpdateTarLoad={updateTarLoadAction}
               onDeleteTarLoad={deleteTarLoadAction}
+              onNavigate={setActiveTab}
             />
           )}
 
           {activeTab === "work-based-entry" && (
-            <WorkBasedEntryView 
-              entries={entries} 
-              workBasedEntries={workBasedEntries} 
+            <WorkBasedEntryView
+              entries={entries}
+              workBasedEntries={workBasedEntries}
               onRefresh={refreshAllStates}
               onCreateWorkBasedEntry={createWorkBasedEntryAction}
               onUpdateWorkBasedEntry={updateWorkBasedEntryAction}
               onDeleteWorkBasedEntry={deleteWorkBasedEntryAction}
+              onNavigate={setActiveTab}
             />
           )}
 
