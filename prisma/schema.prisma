@@ -1,0 +1,210 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String         @id @default(uuid())
+  username       String         @unique
+  email          String         @unique
+  passwordHash   String
+  name           String
+  role           String         // SUPER_ADMIN, ADMIN, MANAGER, ACCOUNTANT, SITE_ENGINEER, STORE_MANAGER, VIEWER
+  department     String?
+  permissions    String         // JSON-string of permissions or list
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  loginHistories LoginHistory[]
+  auditLogs      AuditLog[]
+}
+
+model LoginHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginTime DateTime @default(now())
+  ipAddress String?
+  browser   String?
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  username  String
+  action    String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  entity    String   // Project, Contract, Material, etc.
+  entityId  String?
+  details   String?
+  timestamp DateTime @default(now())
+}
+
+model Project {
+  id            String      @id @default(uuid())
+  name          String
+  number        String      @unique
+  clientName    String
+  officeName    String
+  location      String
+  startDate     DateTime
+  endDate       DateTime
+  status        String      // ACTIVE, COMPLETED, PENDING, ARCHIVED
+  budget        Float
+  description   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  contracts     Contract[]
+  deliveries    Delivery[]
+  workEntries   WorkEntry[]
+  payments      Payment[]
+}
+
+model Contract {
+  id                   String   @id @default(uuid())
+  workName             String
+  amount               Float
+  officeName           String
+  mlaMpName            String
+  loaReceived          Boolean  @default(false)
+  agreementDate        DateTime
+  agreementNumber      String
+  securityDeposit      Float
+  stampPaperAmount     Float
+  performanceGuarantee Float
+  dlpPeriod            String
+  siteHandoverDate     DateTime
+  completionDate       DateTime
+  remarks              String?
+  status               String   // ACTIVE, EXPIRED, TERMINATED
+  projectId            String?
+  project              Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model CementLoad {
+  id             String   @id @default(uuid())
+  purchasedFrom  String
+  cementCompany  String
+  loadInTonne    Float
+  loadInBags     Int
+  amountPerLoad  Float
+  paidAmount     Float
+  balanceAmount  Float
+  purchaseDate   DateTime
+  buyerName      String
+  invoiceNumber  String
+  remarks        String?
+  createdAt      DateTime @default(now())
+}
+
+model TarLoad {
+  id            String   @id @default(uuid())
+  purchasedFrom String
+  itemName      String
+  quantityKg    Float
+  packsCount    Int
+  office        String
+  paidAmount    Float
+  balanceAmount Float
+  purchaseDate  DateTime
+  buyerName     String
+  remarks       String?
+  createdAt     DateTime @default(now())
+}
+
+model Stock {
+  id           String   @id @default(uuid())
+  materialName String   @unique
+  category     String
+  unit         String
+  openingStock Float
+  receivedQty  Float
+  usedQty      Float
+  currentStock Float
+  minStock     Float
+  stockValue   Float
+  status       String   // NORMAL, LOW, OUT_OF_STOCK
+  updatedAt    DateTime @updatedAt
+}
+
+model Delivery {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  materialName  String
+  estimatedQty  Float
+  deliveredQty  Float
+  balanceQty    Float
+  siteQty       Float
+  deliveryDate  DateTime
+  vehicleNumber String
+  driverName    String
+  remarks       String?
+  createdAt     DateTime @default(now())
+}
+
+model WorkEntry {
+  id           String   @id @default(uuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  itemNumber   String
+  itemName     String
+  unit         String
+  estimatedQty Float
+  executedQty  Float
+  rate         Float
+  amount       Float
+  createdAt    DateTime @default(now())
+}
+
+model PrivateWork {
+  id               String   @id @default(uuid())
+  workName         String
+  approxAmount     Float
+  location         String
+  siteVisitDate    DateTime
+  workType         String
+  advanceReceived  Float
+  finalWorkAmount  Float
+  paymentReceived  Float
+  paymentBalance   Float
+  completionDate   DateTime
+  remarks          String?
+  createdAt        DateTime @default(now())
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  type          String   // VENDOR, CLIENT
+  entityName    String   // Vendor Name or Project Name
+  billAmount    Float
+  paidAmount    Float
+  balanceAmount Float
+  paymentDate   DateTime
+  paymentMode   String   // CASH, BANK_TRANSFER, CHEQUE, etc.
+  invoiceNumber String?
+  remarks       String?
+  projectId     String?
+  project       Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String   // LOW_STOCK, PENDING_PAYMENT, CONTRACT_EXPIRY, PROJECT_DUE, DELIVERY_DELAY, PAYMENT_DUE
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id       String @id @default(uuid())
+  key      String @unique
+  value    String
+  category String // COMPANY, GST, UOM, CATEGORY, PAYMENT, PREFERENCES, THEME, BACKUP
+}

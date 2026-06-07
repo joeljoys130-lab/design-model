@@ -1,0 +1,243 @@
+{
+  "users": [
+    {
+      "id": "u-1",
+      "username": "admin",
+      "email": "admin@buildcorp.com",
+      "name": "Administrator",
+      "role": "ADMIN",
+      "department": "Executive Division",
+      "permissions": [
+        "ALL"
+      ],
+      "createdAt": "2026-06-07T04:00:00.000Z",
+      "updatedAt": "2026-06-07T04:00:00.000Z"
+    }
+  ],
+  "cementLoads": [
+    {
+      "id": "cl-1",
+      "purchasedFrom": "Ambuja Cements Distributors",
+      "cementCompany": "Ambuja OPC 53",
+      "loadInTonne": 20,
+      "loadInBags": 400,
+      "amountPerLoad": 180000,
+      "paidAmount": 120000,
+      "balanceAmount": 60000,
+      "purchaseDate": "2026-05-02",
+      "buyerName": "BuildCorp Store Manager",
+      "remarks": "Delivered to main yard stock",
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "id": "cl-2",
+      "purchasedFrom": "UltraTech Commercial Sales",
+      "cementCompany": "UltraTech Premium PPC",
+      "loadInTonne": 30,
+      "loadInBags": 600,
+      "amountPerLoad": 264000,
+      "paidAmount": 264000,
+      "balanceAmount": 0,
+      "purchaseDate": "2026-05-18",
+      "buyerName": "BuildCorp Accounts Dept",
+      "remarks": "Full advance paid",
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "purchasedFrom": "mech",
+      "cementCompany": "Ultra tech",
+      "loadInTonne": 55,
+      "loadInBags": 4,
+      "amountPerLoad": 55555,
+      "paidAmount": 55555,
+      "purchaseDate": "2026-06-03",
+      "buyerName": "thomas",
+      "remarks": "payment done",
+      "id": "cl-k7n2xx6xk",
+      "balanceAmount": 0,
+      "createdAt": "2026-06-07T05:08:25.588Z"
+    }
+  ],
+  "entries": [
+    {
+      "id": "e-1",
+      "workName": "NH-66 Highway Extension Phase 3",
+      "amount": 85000000,
+      "nameOfOffice": "NHAI Regional Office",
+      "mlaMpName": "Mr. Rajesh Kumar MP",
+      "loaReceived": true,
+      "lastDateToExecuteAgreement": "2026-01-20",
+      "amountOfStampPaperRequired": 45000,
+      "securityAmount": 2250000,
+      "performanceGuarantee": 1350000,
+      "dlpPeriodAsPerInLOA": "36 Months",
+      "agreementNo": "NHAI/2026/AGR-089",
+      "siteHandoverDate": "2026-01-28",
+      "workCompletionDateAsPerAgreement": "2026-12-15",
+      "status": "Ongoing",
+      "paymentReceived": 12000000,
+      "createdAt": "2026-06-07T04:00:00.000Z",
+      "updatedAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "id": "e-2",
+      "workName": "MLA Office Complex Construction",
+      "amount": 24000000,
+      "nameOfOffice": "PWD Executive Division",
+      "mlaMpName": "Mr. Salim Ahmed MLA",
+      "loaReceived": true,
+      "lastDateToExecuteAgreement": "2026-02-25",
+      "amountOfStampPaperRequired": 11000,
+      "securityAmount": 550000,
+      "performanceGuarantee": 330000,
+      "dlpPeriodAsPerInLOA": "24 Months",
+      "agreementNo": "PWD/MLA-OFFICE/2026/04",
+      "siteHandoverDate": "2026-03-05",
+      "workCompletionDateAsPerAgreement": "2026-11-30",
+      "status": "Ongoing",
+      "paymentReceived": 3500000,
+      "createdAt": "2026-06-07T04:00:00.000Z",
+      "updatedAt": "2026-06-07T04:00:00.000Z"
+    }
+  ],
+  "stockRegister": [
+    {
+      "id": "s-1",
+      "materialName": "Cement",
+      "inBarrel": 0,
+      "inKg": 0,
+      "inTonne": 105,
+      "usedInTonne": 15,
+      "balanceInTonne": 90,
+      "updatedAt": "2026-06-07T06:36:49.127Z"
+    },
+    {
+      "id": "s-2",
+      "materialName": "RS1",
+      "inBarrel": 100,
+      "inKg": 20000,
+      "inTonne": 20,
+      "usedInTonne": 5,
+      "balanceInTonne": 15,
+      "updatedAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "id": "s-3",
+      "materialName": "SS1",
+      "inBarrel": 50,
+      "inKg": 10000,
+      "inTonne": 10,
+      "usedInTonne": 2,
+      "balanceInTonne": 8,
+      "updatedAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "id": "s-4",
+      "materialName": "VG30",
+      "inBarrel": 150,
+      "inKg": 30000,
+      "inTonne": 30,
+      "usedInTonne": 10,
+      "balanceInTonne": 20,
+      "updatedAt": "2026-06-07T04:00:00.000Z"
+    }
+  ],
+  "siteMaterials": [
+    {
+      "id": "sm-1",
+      "entryId": "e-1",
+      "type": "to_deliver",
+      "itemSlNo": "1",
+      "specName": "Cement",
+      "estimatedQuantity": 1000,
+      "deliveredQuantityInCft": 600,
+      "balanceQuantityInCft": 400,
+      "totalQuantityInSite": 600,
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "id": "sm-2",
+      "entryId": "e-1",
+      "type": "delivered",
+      "itemSlNo": "2",
+      "specName": "VG30 Bitumen",
+      "estimatedQuantity": 500,
+      "deliveredQuantityInCft": 400,
+      "balanceQuantityInCft": 100,
+      "totalQuantityInSite": 400,
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    }
+  ],
+  "privateWorks": [
+    {
+      "id": "pw-1",
+      "workName": "Dr. Nair Luxury Residence",
+      "approxAmount": 6500000,
+      "location": "Greenwood Hills",
+      "relatedToContractWork": "None",
+      "siteVisitDate": "2026-03-15",
+      "roadWorkNature": "Paving & Landscaping",
+      "completedDate": "2026-09-10",
+      "advanceReceived": 1000000,
+      "approxFinalWorkAmount": 6750000,
+      "paymentReceived": 4500000,
+      "paymentBalance": 2250000,
+      "remarks": "Premium structural finish",
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    }
+  ],
+  "tarLoads": [
+    {
+      "id": "tl-1",
+      "purchasedFrom": "Indian Oil Bitumen Depot",
+      "item": "VG30",
+      "quantityInKg": 10000,
+      "loadInNoOfPack": 50,
+      "addressedOffice": "NHAI Regional Office",
+      "paidAmount": 450000,
+      "balanceToBePaid": 150000,
+      "purchasedDate": "2026-05-10",
+      "billingNameBuyer": "Alex Mercer",
+      "remarks": "Bitumen VG30 drums",
+      "amountPerLoad": 600000,
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    }
+  ],
+  "workBasedEntries": [
+    {
+      "id": "wbe-1",
+      "entryId": "e-1",
+      "itemSlNo": "1.2.1",
+      "itemName": "Sub-grade Soil Excavation & Backfilling",
+      "itemQuantity": 18000,
+      "itemRateAsPerEstimate": 350,
+      "totalAmountPerItem": 6300000,
+      "itemUnit": "CUM",
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "id": "wbe-2",
+      "entryId": "e-1",
+      "itemSlNo": "2.4.5",
+      "itemName": "Reinforced Cement Concrete (M35 Grade)",
+      "itemQuantity": 1200,
+      "itemRateAsPerEstimate": 6800,
+      "totalAmountPerItem": 8160000,
+      "itemUnit": "CUM",
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "id": "wbe-3",
+      "entryId": "e-2",
+      "itemSlNo": "PW-A1",
+      "itemName": "Foundation Pile Boring (1m diameter)",
+      "itemQuantity": 320,
+      "itemRateAsPerEstimate": 9500,
+      "totalAmountPerItem": 3040000,
+      "itemUnit": "METER",
+      "createdAt": "2026-06-07T04:00:00.000Z"
+    }
+  ],
+  "notifications": [],
+  "auditLogs": []
+}
