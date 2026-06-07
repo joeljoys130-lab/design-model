@@ -1134,13 +1134,6 @@ export function MaterialsUsedView({
   onUpdateSiteMaterial: (id: string, data: any) => Promise<any>;
   onDeleteSiteMaterial: (id: string) => Promise<any>;
   onNavigate: (tab: string) => void;
-
-  entries: Entry[];
-  siteMaterials: SiteMaterial[];
-  onRefresh: () => void;
-  onCreateSiteMaterial: (data: any) => Promise<any>;
-  onUpdateSiteMaterial: (id: string, data: any) => Promise<any>;
-  onDeleteSiteMaterial: (id: string) => Promise<any>;
 }) {
   const [selectedEntryId, setSelectedEntryId] = useState("");
   const [showItemForm, setShowItemForm] = useState(false);
