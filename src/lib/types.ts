@@ -7,8 +7,8 @@ export interface User {
   role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'ACCOUNTANT' | 'SITE_ENGINEER' | 'STORE_MANAGER' | 'VIEWER';
   department?: string;
   permissions: string[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface AuditLog {
@@ -19,7 +19,7 @@ export interface AuditLog {
   entity: string;
   entityId?: string;
   details?: string;
-  timestamp: string;
+  timestamp: Date;
 }
 
 export interface Notification {
@@ -27,7 +27,7 @@ export interface Notification {
   type: string;
   message: string;
   isRead: boolean;
-  createdAt: string;
+  createdAt: Date;
 }
 
 // MODULE 1 - CEMENT LOAD UPDATION
@@ -36,34 +36,31 @@ export interface CementLoad {
   purchasedFrom: string;
   cementCompany: string;
   loadInTonne: number;
-  loadInBags: number; // No. of Pack
+  loadInBags: number;
   amountPerLoad: number;
   paidAmount: number;
-  balanceAmount: number; // Balance to be paid (amountPerLoad - paidAmount)
-  purchaseDate: string;
-  buyerName: string; // Billing Name / Buyer
-  remarks?: string;
-  createdAt: string;
-
-  // Current Stock Available
-  currentStockDate?: string;
-  currentStockQty?: number;
-  currentStockUsed?: number;
-  currentStockBalance?: number;
-  currentStockUsedAmount?: number;
-  currentStockBalanceAmount?: number;
-
-  // Payment Details
-  paymentPartyName?: string;
-  paymentBillAmount?: number;
-  paymentBillDate?: string;
-  paymentPaidAmount?: number;
-  paymentBalanceAmount?: number;
-  paymentRemarks?: string;
+  balanceAmount: number;
+  purchaseDate: Date;
+  buyerName: string;
+  invoiceNumber: string;
+  remarks: string | null;
+  workId: string | null;
+  createdAt: Date;
+  currentStockDate?: Date | null;
+  currentStockQty?: number | null;
+  currentStockUsed?: number | null;
+  currentStockBalance?: number | null;
+  currentStockUsedAmount?: number | null;
+  currentStockBalanceAmount?: number | null;
+  paymentPartyName?: string | null;
+  paymentBillAmount?: number | null;
+  paymentBillDate?: Date | null;
+  paymentPaidAmount?: number | null;
+  paymentBalanceAmount?: number | null;
+  paymentRemarks?: string | null;
 }
 
-
-// MODULE 2, 8, 9, 10 - ENTRY / WORK STATUS
+// MODULE 2 - ENTRY / WORK STATUS
 export interface Entry {
   id: string;
   workName: string;
@@ -71,18 +68,29 @@ export interface Entry {
   nameOfOffice: string;
   mlaMpName?: string;
   loaReceived: boolean;
-  lastDateToExecuteAgreement: string;
+  lastDateToExecuteAgreement: Date;
   amountOfStampPaperRequired: number;
   securityAmount: number;
   performanceGuarantee: number;
   dlpPeriodAsPerInLOA: string;
   agreementNo: string;
-  siteHandoverDate: string;
-  workCompletionDateAsPerAgreement: string;
+  siteHandoverDate: Date;
+  workCompletionDateAsPerAgreement: Date;
+  wardMemberName?: string;
+  wardMemberPhone?: string;
+  overseerName?: string;
+  overseerPhone?: string;
+  executiveEngineerName?: string;
+  executiveEngineerPhone?: string;
+  assistantEngineerName?: string;
+  assistantEngineerPhone?: string;
+  blockEngineerName?: string;
+  blockEngineerPhone?: string;
   status: 'Not Started' | 'Ongoing' | 'Pending' | 'Completed';
   paymentReceived: number;
-  createdAt: string;
-  updatedAt: string;
+  gstApplicable: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // MODULE 3 - STOCK REGISTER
@@ -93,84 +101,95 @@ export interface StockRegisterItem {
   inKg: number;
   inTonne: number;
   usedInTonne: number;
-  balanceInTonne: number; // (inTonne - usedInTonne)
-  updatedAt: string;
+  balanceInTonne: number;
+  updatedAt: Date;
 }
 
 // MODULE 4 - SITE MATERIALS USED
 export interface SiteMaterial {
   id: string;
-  entryId: string; // linked to Entry/Work
-  type: 'to_deliver' | 'delivered'; // table type
+  entryId: string;
+  type: 'to_deliver' | 'delivered';
   itemSlNo: string;
   specName: string;
   estimatedQuantity: number;
   deliveredQuantityInCft: number;
-  balanceQuantityInCft: number; // (estimatedQuantity - deliveredQuantityInCft)
-  totalQuantityInSite: number; // (deliveredQuantityInCft)
-  createdAt: string;
+  balanceQuantityInCft: number;
+  totalQuantityInSite: number;
+  createdAt: Date;
 }
 
-// MODULE 5 - PRIVATE WORK STATUS / ENTRY
+// MODULE 5 - PRIVATE WORK
 export interface PrivateWork {
   id: string;
   workName: string;
   approxAmount: number;
   location: string;
   relatedToContractWork?: string;
-  siteVisitDate: string;
+  siteVisitDate: Date;
   roadWorkNature: string;
-  completedDate: string;
+  completedDate: Date;
   advanceReceived: number;
   approxFinalWorkAmount: number;
   paymentReceived: number;
-  paymentBalance: number; // (approxFinalWorkAmount - paymentReceived)
-  remarks?: string;
-  createdAt: string;
+  paymentBalance: number;
+  remarks: string | null;
+  gstApplicable: boolean;
+  createdAt: Date;
+  workType?: string;
+  finalWorkAmount?: number;
+  completionDate?: Date;
 }
 
-// MODULE 6 - TAR LOAD UPDATION
+// MODULE 6 - TAR LOAD
 export interface TarLoad {
   id: string;
   purchasedFrom: string;
-  item: 'RS1' | 'SS1' | 'VG30';
+  item: 'Cement' | 'RS1' | 'SS1' | 'VG30';
   quantityInKg: number;
   loadInNoOfPack: number;
   addressedOffice: string;
   paidAmount: number;
-  balanceToBePaid: number; // calculated: amountPerLoad - paidAmount
-  purchasedDate: string;
+  balanceToBePaid: number;
+  purchasedDate: Date;
   billingNameBuyer: string;
-  remarks?: string;
+  remarks: string | null;
   amountPerLoad: number;
-  createdAt: string;
-
-  // Current Stock Available
-  currentStockDate?: string;
-  currentStockQty?: number;
-  currentStockUsed?: number;
-  currentStockBalance?: number;
-  currentStockUsedAmount?: number;
-  currentStockBalanceAmount?: number;
-
-  // Payment Details
-  paymentPartyName?: string;
-  paymentBillAmount?: number;
-  paymentBillDate?: string;
-  paymentPaidAmount?: number;
-  paymentBalanceAmount?: number;
-  paymentRemarks?: string;
+  workId: string | null;
+  createdAt: Date;
+  currentStockDate?: Date | null;
+  currentStockQty?: number | null;
+  currentStockUsed?: number | null;
+  currentStockBalance?: number | null;
+  currentStockUsedAmount?: number | null;
+  currentStockBalanceAmount?: number | null;
+  paymentPartyName?: string | null;
+  paymentBillAmount?: number | null;
+  paymentBillDate?: Date | null;
+  paymentPaidAmount?: number | null;
+  paymentBalanceAmount?: number | null;
+  paymentRemarks?: string | null;
 }
 
-// MODULE 7, 8 - WORK BASED ENTRY
+// MODULE 7 - WORK BASED ENTRY
 export interface WorkBasedEntry {
   id: string;
-  entryId: string; // linked to Entry/Work Name
+  entryId: string;
   itemSlNo: string;
   itemName: string;
   itemQuantity: number;
   itemRateAsPerEstimate: number;
-  totalAmountPerItem: number; // (itemQuantity * itemRateAsPerEstimate)
+  totalAmountPerItem: number;
   itemUnit: string;
-  createdAt: string;
+  createdAt: Date;
+}
+
+// MODULE 11 - EXPENSE
+export interface Expense {
+  id: string;
+  workId: string;
+  date: Date;
+  description: string;
+  amount: number;
+  createdAt: Date;
 }

@@ -74,10 +74,10 @@
       "agreementNo": "NHAI/2026/AGR-089",
       "siteHandoverDate": "2026-01-28",
       "workCompletionDateAsPerAgreement": "2026-12-15",
-      "status": "Ongoing",
-      "paymentReceived": 12000000,
+      "status": "Not Started",
+      "paymentReceived": 0,
       "createdAt": "2026-06-07T04:00:00.000Z",
-      "updatedAt": "2026-06-07T04:00:00.000Z"
+      "updatedAt": "2026-06-17T12:48:29.412Z"
     },
     {
       "id": "e-2",
@@ -105,21 +105,21 @@
       "id": "s-1",
       "materialName": "Cement",
       "inBarrel": 0,
-      "inKg": 0,
-      "inTonne": 105,
-      "usedInTonne": 15,
-      "balanceInTonne": 90,
-      "updatedAt": "2026-06-07T06:36:49.127Z"
+      "inKg": 10000000000,
+      "inTonne": 0,
+      "usedInTonne": 50015,
+      "balanceInTonne": -50015,
+      "updatedAt": "2026-06-17T10:23:51.588Z"
     },
     {
       "id": "s-2",
       "materialName": "RS1",
-      "inBarrel": 100,
-      "inKg": 20000,
-      "inTonne": 20,
+      "inBarrel": 105,
+      "inKg": 30000,
+      "inTonne": 30,
       "usedInTonne": 5,
-      "balanceInTonne": 15,
-      "updatedAt": "2026-06-07T04:00:00.000Z"
+      "balanceInTonne": 25,
+      "updatedAt": "2026-06-17T09:15:52.857Z"
     },
     {
       "id": "s-3",
@@ -134,12 +134,12 @@
     {
       "id": "s-4",
       "materialName": "VG30",
-      "inBarrel": 150,
-      "inKg": 30000,
-      "inTonne": 30,
+      "inBarrel": 192,
+      "inKg": 332000,
+      "inTonne": 332,
       "usedInTonne": 10,
-      "balanceInTonne": 20,
-      "updatedAt": "2026-06-07T04:00:00.000Z"
+      "balanceInTonne": 322,
+      "updatedAt": "2026-06-17T10:32:02.183Z"
     }
   ],
   "siteMaterials": [
@@ -156,16 +156,76 @@
       "createdAt": "2026-06-07T04:00:00.000Z"
     },
     {
-      "id": "sm-2",
+      "entryId": "e-1",
+      "type": "to_deliver",
+      "itemSlNo": "3",
+      "specName": "20mm",
+      "estimatedQuantity": 100,
+      "deliveredQuantityInCft": 50,
+      "id": "sm-5wz5rorry",
+      "balanceQuantityInCft": 50,
+      "totalQuantityInSite": 50,
+      "createdAt": "2026-06-17T07:00:53.314Z"
+    },
+    {
       "entryId": "e-1",
       "type": "delivered",
-      "itemSlNo": "2",
-      "specName": "VG30 Bitumen",
-      "estimatedQuantity": 500,
-      "deliveredQuantityInCft": 400,
-      "balanceQuantityInCft": 100,
-      "totalQuantityInSite": 400,
-      "createdAt": "2026-06-07T04:00:00.000Z"
+      "itemSlNo": "4",
+      "specName": "Dust",
+      "estimatedQuantity": 100,
+      "deliveredQuantityInCft": 100,
+      "id": "sm-pt6dhpoer",
+      "balanceQuantityInCft": 0,
+      "totalQuantityInSite": 100,
+      "createdAt": "2026-06-17T07:34:08.037Z"
+    },
+    {
+      "entryId": "e-1",
+      "type": "to_deliver",
+      "itemSlNo": "4",
+      "specName": "Dust",
+      "estimatedQuantity": 100,
+      "deliveredQuantityInCft": 100,
+      "id": "sm-41bg2jfzc",
+      "balanceQuantityInCft": 0,
+      "totalQuantityInSite": 100,
+      "createdAt": "2026-06-17T07:37:26.338Z"
+    },
+    {
+      "entryId": "e-1",
+      "type": "delivered",
+      "itemSlNo": "del-1",
+      "specName": "Cement",
+      "estimatedQuantity": 0,
+      "deliveredQuantityInCft": 0,
+      "id": "sm-yc43lxkmm",
+      "balanceQuantityInCft": 0,
+      "totalQuantityInSite": 0,
+      "createdAt": "2026-06-17T09:29:18.662Z"
+    },
+    {
+      "entryId": "pw-ddtivuhvs",
+      "type": "to_deliver",
+      "itemSlNo": "1",
+      "specName": "Cement",
+      "estimatedQuantity": 10000,
+      "deliveredQuantityInCft": 5000,
+      "id": "sm-unyqsa0cq",
+      "balanceQuantityInCft": 5000,
+      "totalQuantityInSite": 5000,
+      "createdAt": "2026-06-17T09:50:16.850Z"
+    },
+    {
+      "entryId": "pw-ddtivuhvs",
+      "type": "delivered",
+      "itemSlNo": "1",
+      "specName": "Cement",
+      "estimatedQuantity": 10000,
+      "deliveredQuantityInCft": 50000,
+      "id": "sm-np5rq2qn2",
+      "balanceQuantityInCft": -40000,
+      "totalQuantityInSite": 50000,
+      "createdAt": "2026-06-17T09:50:40.564Z"
     }
   ],
   "privateWorks": [
@@ -184,6 +244,22 @@
       "paymentBalance": 2250000,
       "remarks": "Premium structural finish",
       "createdAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "workName": "privet",
+      "approxAmount": 50000,
+      "location": "pkm",
+      "relatedToContractWork": "",
+      "siteVisitDate": "2026-06-16",
+      "roadWorkNature": "tiling",
+      "completedDate": "2026-06-29",
+      "advanceReceived": 25000,
+      "approxFinalWorkAmount": 50000,
+      "paymentReceived": 25000,
+      "remarks": "noting",
+      "id": "pw-ddtivuhvs",
+      "paymentBalance": 25000,
+      "createdAt": "2026-06-17T09:38:31.162Z"
     }
   ],
   "tarLoads": [
@@ -201,6 +277,51 @@
       "remarks": "Bitumen VG30 drums",
       "amountPerLoad": 600000,
       "createdAt": "2026-06-07T04:00:00.000Z"
+    },
+    {
+      "purchasedFrom": "pnp ",
+      "item": "RS1",
+      "quantityInKg": 10000,
+      "loadInNoOfPack": 5,
+      "addressedOffice": "kokk",
+      "amountPerLoad": 2000,
+      "paidAmount": 1900,
+      "purchasedDate": "2026-06-18",
+      "billingNameBuyer": "1",
+      "remarks": "nothing",
+      "id": "tl-bsskizdif",
+      "balanceToBePaid": 100,
+      "createdAt": "2026-06-17T09:15:52.857Z"
+    },
+    {
+      "purchasedFrom": "Test Cement Vendor",
+      "item": "VG30",
+      "quantityInKg": 2000,
+      "loadInNoOfPack": 40,
+      "addressedOffice": "NHAI Regional Office",
+      "amountPerLoad": 150000,
+      "paidAmount": 100000,
+      "purchasedDate": "60617-02-20",
+      "billingNameBuyer": "Test Admin",
+      "remarks": "",
+      "id": "tl-w2l5t7kh0",
+      "balanceToBePaid": 50000,
+      "createdAt": "2026-06-17T10:16:36.551Z"
+    },
+    {
+      "purchasedFrom": "idk",
+      "item": "VG30",
+      "quantityInKg": 300000,
+      "loadInNoOfPack": 2,
+      "addressedOffice": "adk",
+      "amountPerLoad": 35000,
+      "paidAmount": 7000,
+      "purchasedDate": "2026-06-16",
+      "billingNameBuyer": "thomas",
+      "remarks": "nothind",
+      "id": "tl-iahdvudkh",
+      "balanceToBePaid": 28000,
+      "createdAt": "2026-06-17T10:32:02.183Z"
     }
   ],
   "workBasedEntries": [
@@ -239,5 +360,63 @@
     }
   ],
   "notifications": [],
-  "auditLogs": []
+  "auditLogs": [],
+  "expenses": [
+    {
+      "workId": "e-1",
+      "date": "2026-06-17",
+      "description": "Others",
+      "amount": 100,
+      "id": "exp-loda8z77w",
+      "createdAt": "2026-06-17T13:43:42.878Z"
+    },
+    {
+      "workId": "e-1",
+      "date": "2026-06-17",
+      "description": "Labour",
+      "amount": 50000,
+      "id": "exp-topw4n190",
+      "createdAt": "2026-06-17T13:44:25.885Z"
+    },
+    {
+      "workId": "pw-ddtivuhvs",
+      "date": "2026-06-17",
+      "description": "Labour",
+      "amount": 250,
+      "id": "exp-piwhdsf52",
+      "createdAt": "2026-06-17T13:45:44.399Z"
+    },
+    {
+      "workId": "pw-ddtivuhvs",
+      "date": "2026-06-17",
+      "description": "Food",
+      "amount": 1250,
+      "id": "exp-qlurht9yk",
+      "createdAt": "2026-06-17T13:46:05.641Z"
+    },
+    {
+      "workId": "e-1",
+      "date": "2026-06-17",
+      "description": "Labour",
+      "amount": 7500,
+      "id": "exp-po7eaan13",
+      "createdAt": "2026-06-17T13:46:53.592Z"
+    },
+    {
+      "workId": "pw-1",
+      "date": "2026-06-17",
+      "description": "Water",
+      "amount": 400,
+      "id": "exp-4drofixrf",
+      "createdAt": "2026-06-17T13:59:15.042Z"
+    },
+    {
+      "workId": "e-1",
+      "date": "2026-06-17",
+      "description": "Machine Rent",
+      "amount": 1000,
+      "id": "exp-waexle70d",
+      "createdAt": "2026-06-17T14:05:29.354Z"
+    }
+  ]
 }

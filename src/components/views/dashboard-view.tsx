@@ -4,7 +4,7 @@ import {
   Building2, Layers, Package, Fuel, TrendingUp, Calendar, ArrowRight, 
   Award, FileText, CheckSquare, PlusCircle, BookOpen, Warehouse, Compass
 } from "lucide-react";
-import { CementLoad, Entry, StockRegisterItem, PrivateWork, TarLoad, WorkBasedEntry } from "@/lib/types";
+import { CementLoad, Entry, StockRegisterItem, PrivateWork, TarLoad, WorkBasedEntry, Expense } from "@/lib/types";
 
 interface DashboardViewProps {
   data: {
@@ -15,6 +15,7 @@ interface DashboardViewProps {
     siteMaterials: any[];
     workBasedEntries: WorkBasedEntry[];
     privateWorks: PrivateWork[];
+    expenses?: Expense[];
   };
   onNavigate: (tab: string) => void;
 }
@@ -25,22 +26,53 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
     cementLoads = [],
     tarLoads = [],
     stockRegister = [],
-    privateWorks = []
+    privateWorks = [],
+    expenses = []
   } = data;
 
   const totalCementBags = cementLoads.reduce((sum, item) => sum + item.loadInBags, 0);
   const totalTarKg = tarLoads.reduce((sum, item) => sum + item.quantityInKg, 0);
   
-  const activeEntriesCount = entries.filter(e => e.status === 'Ongoing').length;
+  const ongoingContractsCount = entries.filter(e => e.status === 'Ongoing').length;
+  const ongoingPrivateWorksCount = privateWorks.length; // Private works are all considered ongoing (no status field)
+  const activeWorksCount = ongoingContractsCount + ongoingPrivateWorksCount;
+  const completedWorksCount = entries.filter(e => e.status === 'Completed').length;
   const totalContractValuation = entries.reduce((sum, e) => sum + e.amount, 0);
-
   const privateWorksValuation = privateWorks.reduce((sum, p) => sum + p.approxFinalWorkAmount, 0);
+  const totalWorksCount = entries.filter(e => e.status !== 'Completed').length + privateWorks.length;
+
+  // Financial & Profitability calculations
+  const portfolioValuation = totalContractValuation + privateWorksValuation;
+  const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
+  const contractPayments = entries.reduce((sum, e) => sum + (e.paymentReceived || 0), 0);
+  const privatePayments = privateWorks.reduce((sum, p) => sum + (p.paymentReceived || 0), 0);
+  const totalPaymentsReceived = contractPayments + privatePayments;
+  const projectedProfit = portfolioValuation - totalExpenses;
+  const realizedProfit = totalPaymentsReceived - totalExpenses;
+
+  // Compute upcoming work completion alerts
+  const now = new Date();
+  const alerts = entries.map(entry => {
+    const compDate = new Date(entry.workCompletionDateAsPerAgreement);
+    const diffMs = compDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays <= 2 && diffDays >= 0) {
+      return { id: entry.id, type: 'important', message: `Work "${entry.workName}" completes in ${diffDays} day(s) – IMPORTANT!` };
+    } else if (diffDays <= 3 && diffDays > 2) {
+      return { id: entry.id, type: 'warning', message: `Work "${entry.workName}" completes in ${diffDays} days.` };
+    } else if (diffDays <= 7 && diffDays > 3) {
+      return { id: entry.id, type: 'info', message: `Work "${entry.workName}" completes in ${diffDays} days.` };
+    }
+    return null;
+  }).filter(Boolean);
 
   const stats = [
-    { label: "Active Contracts", value: activeEntriesCount, desc: "Ongoing government works" },
+    { label: "Active Works", value: activeWorksCount, desc: "Ongoing contracts + private works" },
     { label: "Contract Value", value: `₹${(totalContractValuation / 100000).toFixed(1)} L`, desc: "Total value of agreements" },
     { label: "Cement Stocked", value: `${totalCementBags} Bags`, desc: "Total purchased cement bags" },
     { label: "Tar Aggregate", value: `${(totalTarKg / 1000).toFixed(1)} Tons`, desc: "Bitumen emulsion aggregate" },
+    { label: "Total Works", value: totalWorksCount, desc: "All active works (excludes completed)" },
+    { label: "Works Completed", value: completedWorksCount, desc: "Completed works count" },
   ];
 
   const modules = [
@@ -55,6 +87,21 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
     { id: "office-wise-work", label: "Office Wise Work List", icon: Building2, desc: "Group and display ongoing construction projects by PWD or NHAI regional offices." },
     { id: "work-status-updation", label: "Work Status / Updation", icon: CheckSquare, desc: "Update contract execution parameters, timeline details, and progress status." },
   ];
+
+  // Render alerts UI
+  const renderAlert = (alert: any) => {
+    const baseStyle = "p-3 rounded mb-2 text-sm font-medium";
+    let style = "bg-blue-100 text-blue-800"; // info
+    if (alert.type === 'warning') style = "bg-yellow-100 text-yellow-800";
+    if (alert.type === 'important') style = "bg-red-100 text-red-800 border border-red-400 animate-pulse";
+    return (
+      <div key={alert.id} className={`${baseStyle} ${style}`}>🚨 {alert.message}</div>
+    );
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-IN').format(num);
+  };
 
   return (
     <div className="space-y-8 animate-fade-in text-black">
@@ -73,6 +120,51 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
             <div className="text-[10px] text-neutral-500 mt-1">{stat.desc}</div>
           </div>
         ))}
+      </div>
+
+      {/* Portfolio Profitability & Financial Health */}
+      <div className="space-y-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-400 pb-2 border-b border-neutral-100">
+          Portfolio Profitability & Financial Health
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between">
+            <div>
+              <div className="text-[9px] uppercase font-bold text-neutral-400 tracking-wider">Total Portfolio Valuation</div>
+              <div className="text-xl font-mono font-bold mt-1.5 text-black">₹{formatNumber(portfolioValuation)}</div>
+            </div>
+            <div className="text-[10px] text-neutral-500 mt-2 border-t border-neutral-100 pt-2 flex justify-between">
+              <span>Govt Contracts: ₹{formatNumber(totalContractValuation)}</span>
+              <span>Private: ₹{formatNumber(privateWorksValuation)}</span>
+            </div>
+          </div>
+          <div className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between">
+            <div>
+              <div className="text-[9px] uppercase font-bold text-neutral-400 tracking-wider">Total Operational Cost / Expenses</div>
+              <div className="text-xl font-mono font-bold mt-1.5 text-neutral-600">₹{formatNumber(totalExpenses)}</div>
+            </div>
+            <div className="text-[10px] text-neutral-500 mt-2 border-t border-neutral-100 pt-2">
+              All logged machine rents, labor wages, fuel, and site fees.
+            </div>
+          </div>
+          <div className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between">
+            <div>
+              <div className="text-[9px] uppercase font-bold text-neutral-400 tracking-wider">Projected Portfolio Profit</div>
+              <div className={`text-xl font-mono font-bold mt-1.5 ${projectedProfit >= 0 ? 'text-black font-extrabold' : 'text-red-600'}`}>
+                ₹{formatNumber(projectedProfit)}
+              </div>
+            </div>
+            <div className="text-[10px] text-neutral-500 mt-2 border-t border-neutral-100 pt-2 flex justify-between">
+              <span>Margin: {portfolioValuation > 0 ? ((projectedProfit / portfolioValuation) * 100).toFixed(1) : 0}%</span>
+              <span>Realized Cash Profit: ₹{formatNumber(realizedProfit)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Upcoming Work Alerts */}
+      <div className="space-y-2">
+        {alerts.length > 0 ? alerts.map(renderAlert) : <div className="text-sm text-neutral-500">No upcoming work completions.</div>}
       </div>
 
       {/* Modules List */}

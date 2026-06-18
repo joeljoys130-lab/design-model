@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { 
   Building2, Layers, Package, Fuel, Award, FileText, CheckSquare, 
-  PlusCircle, BookOpen, Warehouse, Compass, Menu, X, LogOut, Moon, Sun
+  PlusCircle, BookOpen, Warehouse, Compass, Menu, X, LogOut,
+  Receipt, TrendingUp
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { 
   createCementLoadAction, updateCementLoadAction, deleteCementLoadAction,
   createEntryAction, updateEntryAction, deleteEntryAction,
@@ -15,13 +17,15 @@ import {
   createWorkBasedEntryAction, updateWorkBasedEntryAction, deleteWorkBasedEntryAction,
   getCementLoadsAction, getEntriesAction, getStockRegisterAction,
   getSiteMaterialsAction, getPrivateWorksAction, getTarLoadsAction,
-  getWorkBasedEntriesAction
+  getWorkBasedEntriesAction,
+  createExpenseAction, updateExpenseAction, deleteExpenseAction, getExpensesAction
 } from "@/app/actions";
 import DashboardView from "./views/dashboard-view";
 import { 
   CementLoadView, EntryView, StockRegisterView, MaterialsUsedView, 
   PrivateWorkView, TarLoadView, WorkBasedEntryView, WorkBasedRegisterView, 
-  OfficeWiseWorkView, WorkStatusUpdationView 
+  OfficeWiseWorkView, WorkStatusUpdationView, ExpenseUpdationView,
+  ProfitCalculationView
 } from "./views/modules";
 
 interface DashboardPortalProps {
@@ -34,6 +38,12 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    router.push('/login');
+  };
 
   // Modular Data States
   const [cementLoads, setCementLoads] = useState(initialData.cementLoads || []);
@@ -43,18 +53,20 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
   const [privateWorks, setPrivateWorks] = useState(initialData.privateWorks || []);
   const [tarLoads, setTarLoads] = useState(initialData.tarLoads || []);
   const [workBasedEntries, setWorkBasedEntries] = useState(initialData.workBasedEntries || []);
+  const [expenses, setExpenses] = useState(initialData.expenses || []);
 
   const refreshAllStates = async () => {
     setLoading(true);
     try {
-      const [cl, ent, stk, sm, pw, tl, wbe] = await Promise.all([
+      const [cl, ent, stk, sm, pw, tl, wbe, exp] = await Promise.all([
         getCementLoadsAction(),
         getEntriesAction(),
         getStockRegisterAction(),
         getSiteMaterialsAction(),
         getPrivateWorksAction(),
         getTarLoadsAction(),
-        getWorkBasedEntriesAction()
+        getWorkBasedEntriesAction(),
+        getExpensesAction()
       ]);
       setCementLoads(cl);
       setEntries(ent);
@@ -63,6 +75,7 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
       setPrivateWorks(pw);
       setTarLoads(tl);
       setWorkBasedEntries(wbe);
+      setExpenses(exp);
     } catch (e) {
       console.error("Failed to refresh dashboard data", e);
     } finally {
@@ -82,19 +95,21 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
     { id: "work-based-register", label: "Work Based Register", icon: BookOpen },
     { id: "office-wise-work", label: "Office Wise Work List", icon: Layers },
     { id: "work-status-updation", label: "Work Status Updation", icon: CheckSquare },
+    { id: "expense-updation", label: "Expense Updation", icon: Receipt },
+    { id: "profit-calculation", label: "Profit Calculation", icon: TrendingUp },
   ];
 
   return (
     <div className="min-h-screen flex bg-white text-black font-sans selection:bg-neutral-200">
       
-      {/* 1. SIDEBAR (DESKTOP) */}
-      <aside className="hidden lg:flex flex-col w-64 border-r border-neutral-200 bg-black text-white shrink-0">
+      {/* 1. SIDEBAR (DESKTOP) — hidden during print */}
+      <aside className="hidden lg:flex print:hidden flex-col w-64 border-r border-neutral-200 bg-black text-white shrink-0">
         <div className="h-16 flex items-center gap-3 px-6 border-b border-neutral-800 bg-black">
           <div className="w-6 h-6 border border-white flex items-center justify-center font-bold text-xs">
-            M
+            A
           </div>
           <span className="font-bold text-xs tracking-widest uppercase">
-            CONSTRUCTION ERP
+            Aravind Associates
           </span>
         </div>
 
@@ -109,9 +124,9 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
       </nav>
       </aside>
 
-      {/* 2. SIDEBAR DRAWER (MOBILE) */}
+      {/* 2. SIDEBAR DRAWER (MOBILE) — hidden during print */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden flex bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-40 lg:hidden print:hidden flex bg-black/60 backdrop-blur-xs">
           <aside className="w-64 bg-black text-white flex flex-col h-full border-r border-neutral-800">
             <div className="h-16 flex items-center justify-between px-6 border-b border-neutral-800">
               <div className="flex items-center gap-2">
@@ -136,8 +151,8 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
       {/* 3. MAIN CONTENT CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Navbar */}
-        <header className="h-16 border-b border-neutral-200 bg-white flex items-center justify-between px-6 sticky top-0 z-30">
+        {/* Top Navbar — hidden during print */}
+        <header className="print:hidden h-16 border-b border-neutral-200 bg-white flex items-center justify-between px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(true)}
@@ -147,7 +162,6 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
             </button>
             <div className="hidden sm:flex items-center gap-2 border border-neutral-200 px-3 py-1 rounded text-xs font-bold bg-neutral-50 uppercase">
               <span className="w-2.5 h-2.5 bg-black rounded-full" />
-              <span>Division: Executive Wing</span>
             </div>
           </div>
 
@@ -157,11 +171,24 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
                 Syncing database...
               </span>
             )}
+            {/* User info */}
+            <span className="hidden md:block text-xs text-neutral-500 font-medium">
+              {user?.email ?? user?.name ?? 'User'}
+            </span>
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              title="Logout"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-neutral-600 border border-neutral-200 rounded hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </header>
 
         {/* Dynamic Inner Tab View */}
-        <main className="flex-1 p-6 overflow-y-auto relative bg-neutral-50">
+        <main className="flex-1 p-6 overflow-y-auto relative bg-neutral-50 print:p-0 print:bg-white print:overflow-visible">
           
           {activeTab === "dashboard" && (
             <DashboardView 
@@ -172,20 +199,22 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
                 stockRegister,
                 siteMaterials,
                 workBasedEntries,
-                privateWorks
+                privateWorks,
+                expenses
               }} 
               onNavigate={setActiveTab} 
             />
           )}
 
           {activeTab === "cement-load" && (
-            <CementLoadView 
-              cementLoads={cementLoads} 
-              onRefresh={refreshAllStates}
-              onCreateCementLoad={createCementLoadAction}
-              onUpdateCementLoad={updateCementLoadAction}
-              onDeleteCementLoad={deleteCementLoadAction}
-            />
+                      <CementLoadView
+            cementLoads={cementLoads}
+            onRefresh={refreshAllStates}
+            onCreateCementLoad={createCementLoadAction}
+            onUpdateCementLoad={updateCementLoadAction}
+            onDeleteCementLoad={deleteCementLoadAction}
+            onNavigate={setActiveTab}
+          />
           )}
 
           {activeTab === "entry" && (
@@ -195,6 +224,7 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
               onCreateEntry={createEntryAction}
               onUpdateEntry={updateEntryAction}
               onDeleteEntry={deleteEntryAction}
+              onNavigate={setActiveTab}
             />
           )}
 
@@ -203,17 +233,20 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
               stockItems={stockRegister}
               onRefresh={refreshAllStates}
               onUpdateStockItem={updateStockRegisterItemAction}
+              onNavigate={setActiveTab}
             />
           )}
 
           {activeTab === "materials-used" && (
             <MaterialsUsedView 
-              entries={entries} 
+              entries={entries}
+              privateWorks={privateWorks}
               siteMaterials={siteMaterials} 
               onRefresh={refreshAllStates}
               onCreateSiteMaterial={createSiteMaterialAction}
               onUpdateSiteMaterial={updateSiteMaterialAction}
               onDeleteSiteMaterial={deleteSiteMaterialAction}
+              onNavigate={setActiveTab}
             />
           )}
 
@@ -235,24 +268,29 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
               onCreateTarLoad={createTarLoadAction}
               onUpdateTarLoad={updateTarLoadAction}
               onDeleteTarLoad={deleteTarLoadAction}
+              onNavigate={setActiveTab}
             />
           )}
 
           {activeTab === "work-based-entry" && (
             <WorkBasedEntryView 
               entries={entries} 
+              privateWorks={privateWorks}
               workBasedEntries={workBasedEntries} 
               onRefresh={refreshAllStates}
               onCreateWorkBasedEntry={createWorkBasedEntryAction}
               onUpdateWorkBasedEntry={updateWorkBasedEntryAction}
               onDeleteWorkBasedEntry={deleteWorkBasedEntryAction}
+              onNavigate={setActiveTab}
             />
           )}
 
           {activeTab === "work-based-register" && (
             <WorkBasedRegisterView 
               entries={entries} 
+              privateWorks={privateWorks}
               workBasedEntries={workBasedEntries} 
+              expenses={expenses}
             />
           )}
 
@@ -267,6 +305,30 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
               entries={entries} 
               onRefresh={refreshAllStates}
               onUpdateEntry={updateEntryAction}
+            />
+          )}
+
+          {activeTab === "expense-updation" && (
+            <ExpenseUpdationView 
+              entries={entries} 
+              privateWorks={privateWorks}
+              expenses={expenses}
+              onRefresh={refreshAllStates}
+              onCreateExpense={createExpenseAction}
+              onUpdateExpense={updateExpenseAction}
+              onDeleteExpense={deleteExpenseAction}
+              onNavigate={setActiveTab}
+            />
+          )}
+
+          {activeTab === "profit-calculation" && (
+            <ProfitCalculationView 
+              entries={entries} 
+              privateWorks={privateWorks}
+              cementLoads={cementLoads}
+              tarLoads={tarLoads}
+              expenses={expenses}
+              onNavigate={setActiveTab}
             />
           )}
 

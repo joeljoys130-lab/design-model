@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Plus, Search, FileDown, Edit2, Trash2, Calendar, FileText, CheckCircle, 
   AlertCircle, X, ChevronRight, Filter, Printer
 } from "lucide-react";
 import { 
   CementLoad, Entry, StockRegisterItem, SiteMaterial, 
-  PrivateWork, TarLoad, WorkBasedEntry 
+  PrivateWork, TarLoad, WorkBasedEntry, Expense 
 } from "@/lib/types";
 
 // Common helper for CSV exports
@@ -27,6 +27,15 @@ const exportCSV = (data: any[], filename: string) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+
+const formatDate = (date: any): string => {
+  if (!date) return "";
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (d instanceof Date && !isNaN(d.getTime())) {
+    return d.toISOString().substring(0, 10);
+  }
+  return "";
 };
 
 // ==========================================
@@ -148,11 +157,11 @@ export function CementLoadView({
     setLoadInBags(load.loadInBags);
     setAmountPerLoad(load.amountPerLoad);
     setPaidAmount(load.paidAmount);
-    setPurchaseDate(load.purchaseDate.substring(0, 10));
+    setPurchaseDate(formatDate(load.purchaseDate));
     setBuyerName(load.buyerName);
     setRemarks(load.remarks || "");
 
-    setCurrentStockDate(load.currentStockDate ? load.currentStockDate.substring(0, 10) : "");
+    setCurrentStockDate(formatDate(load.currentStockDate));
     setCurrentStockQty(load.currentStockQty || 0);
     setCurrentStockUsed(load.currentStockUsed || 0);
     setCurrentStockUsedAmount(load.currentStockUsedAmount || 0);
@@ -160,7 +169,7 @@ export function CementLoadView({
 
     setPaymentPartyName(load.paymentPartyName || "");
     setPaymentBillAmount(load.paymentBillAmount || 0);
-    setPaymentBillDate(load.paymentBillDate ? load.paymentBillDate.substring(0, 10) : "");
+    setPaymentBillDate(formatDate(load.paymentBillDate));
     setPaymentPaidAmount(load.paymentPaidAmount || 0);
     setPaymentRemarks(load.paymentRemarks || "");
 
@@ -501,7 +510,7 @@ export function CementLoadView({
             <tbody className="divide-y divide-neutral-100">
               {filteredLoads.map(load => (
                 <tr key={load.id} className="hover:bg-neutral-55">
-                  <td className="p-3 font-mono text-black">{load.purchaseDate.substring(0, 10)}</td>
+                  <td className="p-3 font-mono text-black">{formatDate(load.purchaseDate)}</td>
                   <td className="p-3 font-bold text-black">{load.purchasedFrom}</td>
                   <td className="p-3 text-black">{load.cementCompany}</td>
                   <td className="p-3 text-right font-mono text-black">{load.loadInTonne} T</td>
@@ -569,11 +578,30 @@ export function EntryView({
   const [agreementNo, setAgreementNo] = useState("");
   const [siteHandoverDate, setSiteHandoverDate] = useState("");
   const [workCompletionDateAsPerAgreement, setWorkCompletionDateAsPerAgreement] = useState("");
-
+  // Contact person state hooks
+  const [wardMemberName, setWardMemberName] = useState("");
+  const [wardMemberPhone, setWardMemberPhone] = useState("");
+  const [overseerName, setOverseerName] = useState("");
+  const [overseerPhone, setOverseerPhone] = useState("");
+  const [executiveEngineerName, setExecutiveEngineerName] = useState("");
+  const [executiveEngineerPhone, setExecutiveEngineerPhone] = useState("");
+  const [assistantEngineerName, setAssistantEngineerName] = useState("");
+  const [assistantEngineerPhone, setAssistantEngineerPhone] = useState("");
+  const [blockEngineerName, setBlockEngineerName] = useState("");
+  const [blockEngineerPhone, setBlockEngineerPhone] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   const clearForm = () => {
-    setWorkName("");
+    setWardMemberName("");
+    setWardMemberPhone("");
+    setOverseerName("");
+    setOverseerPhone("");
+    setExecutiveEngineerName("");
+    setExecutiveEngineerPhone("");
+    setAssistantEngineerName("");
+    setAssistantEngineerPhone("");
+    setBlockEngineerName("");
+    setBlockEngineerPhone("");
     setAmount(0);
     setNameOfOffice("");
     setMlaMpName("");
@@ -594,7 +622,7 @@ export function EntryView({
       workName,
       amount: Number(amount),
       nameOfOffice,
-      mlaMpName,
+      mlaMpName: mlaMpName || "",
       loaReceived,
       lastDateToExecuteAgreement,
       amountOfStampPaperRequired: Number(amountOfStampPaperRequired),
@@ -604,9 +632,20 @@ export function EntryView({
       agreementNo,
       siteHandoverDate,
       workCompletionDateAsPerAgreement,
-      // Default placeholder fields for other views
-      status: "Not Started",
-      paymentReceived: 0
+      // Contact fields
+      wardMemberName: wardMemberName || "",
+      wardMemberPhone: wardMemberPhone || "",
+      overseerName: overseerName || "",
+      overseerPhone: overseerPhone || "",
+      executiveEngineerName: executiveEngineerName || "",
+      executiveEngineerPhone: executiveEngineerPhone || "",
+      assistantEngineerName: assistantEngineerName || "",
+      assistantEngineerPhone: assistantEngineerPhone || "",
+      blockEngineerName: blockEngineerName || "",
+      blockEngineerPhone: blockEngineerPhone || "",
+      status: 'Not Started',
+      paymentReceived: 0,
+      createdAt: new Date().toISOString()
     };
     if (editingId) {
       await onUpdateEntry(editingId, payload);
@@ -626,14 +665,24 @@ export function EntryView({
     setNameOfOffice(entry.nameOfOffice);
     setMlaMpName(entry.mlaMpName || "");
     setLoaReceived(entry.loaReceived);
-    setLastDateToExecuteAgreement(entry.lastDateToExecuteAgreement.substring(0, 10));
+    setLastDateToExecuteAgreement(formatDate(entry.lastDateToExecuteAgreement));
     setAmountOfStampPaperRequired(entry.amountOfStampPaperRequired);
     setSecurityAmount(entry.securityAmount);
     setPerformanceGuarantee(entry.performanceGuarantee);
     setDlpPeriodAsPerInLOA(entry.dlpPeriodAsPerInLOA);
     setAgreementNo(entry.agreementNo);
-    setSiteHandoverDate(entry.siteHandoverDate.substring(0, 10));
-    setWorkCompletionDateAsPerAgreement(entry.workCompletionDateAsPerAgreement.substring(0, 10));
+    setSiteHandoverDate(formatDate(entry.siteHandoverDate));
+    setWorkCompletionDateAsPerAgreement(formatDate(entry.workCompletionDateAsPerAgreement));
+    setWardMemberName(entry.wardMemberName || "");
+    setWardMemberPhone(entry.wardMemberPhone || "");
+    setOverseerName(entry.overseerName || "");
+    setOverseerPhone(entry.overseerPhone || "");
+    setExecutiveEngineerName(entry.executiveEngineerName || "");
+    setExecutiveEngineerPhone(entry.executiveEngineerPhone || "");
+    setAssistantEngineerName(entry.assistantEngineerName || "");
+    setAssistantEngineerPhone(entry.assistantEngineerPhone || "");
+    setBlockEngineerName(entry.blockEngineerName || "");
+    setBlockEngineerPhone(entry.blockEngineerPhone || "");
     setShowForm(true);
   };
 
@@ -779,6 +828,46 @@ export function EntryView({
               />
             </div>
             <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Ward Member Name</label>
+              <input type="text" value={wardMemberName} onChange={e => setWardMemberName(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Ward Member" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Ward Member Phone</label>
+              <input type="text" value={wardMemberPhone} onChange={e => setWardMemberPhone(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Phone" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Overseer Name</label>
+              <input type="text" value={overseerName} onChange={e => setOverseerName(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Overseer" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Overseer Phone</label>
+              <input type="text" value={overseerPhone} onChange={e => setOverseerPhone(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Phone" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Executive Engineer Name</label>
+              <input type="text" value={executiveEngineerName} onChange={e => setExecutiveEngineerName(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Executive Engineer" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Executive Engineer Phone</label>
+              <input type="text" value={executiveEngineerPhone} onChange={e => setExecutiveEngineerPhone(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Phone" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Assistant Engineer Name</label>
+              <input type="text" value={assistantEngineerName} onChange={e => setAssistantEngineerName(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Assistant Engineer" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Assistant Engineer Phone</label>
+              <input type="text" value={assistantEngineerPhone} onChange={e => setAssistantEngineerPhone(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Phone" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Block Engineer Name</label>
+              <input type="text" value={blockEngineerName} onChange={e => setBlockEngineerName(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Block Engineer" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Block Engineer Phone</label>
+              <input type="text" value={blockEngineerPhone} onChange={e => setBlockEngineerPhone(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white" placeholder="Phone" />
+            </div>
+            <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Site Handover Date</label>
               <input 
                 type="date" required value={siteHandoverDate} onChange={(e) => setSiteHandoverDate(e.target.value)}
@@ -876,8 +965,8 @@ export function EntryView({
                   <td className="p-3 text-neutral-600">{e.nameOfOffice}</td>
                   <td className="p-3 text-right font-mono font-bold text-black">₹{e.amount.toLocaleString()}</td>
                   <td className="p-3 font-mono text-black">{e.agreementNo || "Pending"}</td>
-                  <td className="p-3 font-mono text-black">{e.siteHandoverDate.substring(0, 10)}</td>
-                  <td className="p-3 font-mono text-black">{e.workCompletionDateAsPerAgreement.substring(0, 10)}</td>
+                  <td className="p-3 font-mono text-black">{formatDate(e.siteHandoverDate)}</td>
+                  <td className="p-3 font-mono text-black">{formatDate(e.workCompletionDateAsPerAgreement)}</td>
                   <td className="p-3 text-center">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${e.loaReceived ? 'border-black bg-black text-white' : 'border-neutral-300 bg-white text-neutral-500'}`}>
                       {e.loaReceived ? "YES" : "NO"}
@@ -991,6 +1080,30 @@ export function StockRegisterView({
             Back
           </button>
         </div>
+      </div>
+
+      {/* Stats Summary Cards for Stock Balances (Main Attraction) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
+        {stockItems.map(item => {
+          const balance = item.inTonne - item.usedInTonne;
+          let borderColor = "#a3a3a3";
+          if (item.materialName === "Cement") borderColor = "#2563eb";
+          else if (item.materialName === "RS1") borderColor = "#f59e0b";
+          else if (item.materialName === "SS1") borderColor = "#10b981";
+          else if (item.materialName === "VG30") borderColor = "#4f46e5";
+          
+          return (
+            <div key={item.id} style={{ borderLeftColor: borderColor }} className="border border-neutral-200 border-l-4 bg-white p-4 rounded shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="text-[10px] uppercase font-bold text-neutral-400">{item.materialName} Balance</div>
+              <div className="text-2xl font-mono font-bold mt-1 text-black">
+                {balance.toLocaleString()} T
+              </div>
+              <div className="text-[10px] text-neutral-500 mt-1">
+                {item.usedInTonne.toLocaleString()} T used of {item.inTonne.toLocaleString()} T
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {editingId && (
@@ -1121,6 +1234,7 @@ export function StockRegisterView({
 export function MaterialsUsedView({
   entries,
   siteMaterials,
+  privateWorks = [],
   onRefresh,
   onCreateSiteMaterial,
   onUpdateSiteMaterial,
@@ -1128,32 +1242,50 @@ export function MaterialsUsedView({
   onNavigate
 }: {
   entries: Entry[];
+  privateWorks?: PrivateWork[];
   siteMaterials: SiteMaterial[];
   onRefresh: () => void;
   onCreateSiteMaterial: (data: any) => Promise<any>;
   onUpdateSiteMaterial: (id: string, data: any) => Promise<any>;
   onDeleteSiteMaterial: (id: string) => Promise<any>;
   onNavigate: (tab: string) => void;
-
-  entries: Entry[];
-  siteMaterials: SiteMaterial[];
-  onRefresh: () => void;
-  onCreateSiteMaterial: (data: any) => Promise<any>;
-  onUpdateSiteMaterial: (id: string, data: any) => Promise<any>;
-  onDeleteSiteMaterial: (id: string) => Promise<any>;
 }) {
   const [selectedEntryId, setSelectedEntryId] = useState("");
   const [showItemForm, setShowItemForm] = useState(false);
   const [itemType, setItemType] = useState<'to_deliver' | 'delivered'>('to_deliver');
-const [searchQuery, setSearchQuery] = useState("");
+  const [workSearchQuery, setWorkSearchQuery] = useState("");
+
+  const handleWorkSearch = (query: string) => {
+    setWorkSearchQuery(query);
+    if (!query) {
+      setSelectedEntryId("");
+      return;
+    }
+    const combined = [
+      ...entries.map(e => ({ id: e.id, name: e.workName })),
+      ...(privateWorks || []).map(p => ({ id: p.id, name: p.workName }))
+    ];
+    const match = combined.find(opt => 
+      opt.name.toLowerCase().includes(query.toLowerCase())
+    );
+    if (match) {
+      setSelectedEntryId(match.id);
+    } else {
+      setSelectedEntryId("");
+    }
+  };
 
   // Form inputs
   const [itemSlNo, setItemSlNo] = useState("");
-  const [specName, setSpecName] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+
   const [estimatedQuantity, setEstimatedQuantity] = useState(0);
   const [deliveredQuantity, setDeliveredQuantity] = useState(0);
+  const [specName, setSpecName] = useState("");
 
   const selectedEntry = entries.find(e => e.id === selectedEntryId);
+  const selectedPrivate = privateWorks?.find(p => p.id === selectedEntryId);
+  const work = selectedEntry || selectedPrivate;
 
   const clearForm = () => {
     setItemSlNo("");
@@ -1178,24 +1310,81 @@ const [searchQuery, setSearchQuery] = useState("");
     onRefresh();
   };
 
+  const handleEditItem = (item: SiteMaterial, type: 'to_deliver' | 'delivered') => {
+    setItemSlNo(item.itemSlNo);
+    setSpecName(item.specName);
+    if (type === 'to_deliver') {
+      setEstimatedQuantity(item.estimatedQuantity);
+      setDeliveredQuantity(0);
+      setItemType('to_deliver');
+    } else {
+      setEstimatedQuantity(0);
+      setDeliveredQuantity(item.deliveredQuantityInCft);
+      setItemType('delivered');
+    }
+    setEditingItemId(item.id);
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    if (itemType === 'to_deliver') {
+      await onUpdateSiteMaterial(id, { estimatedQuantity: Number(estimatedQuantity) });
+    } else {
+      await onUpdateSiteMaterial(id, { deliveredQuantityInCft: Number(deliveredQuantity) });
+    }
+    setEditingItemId(null);
+    clearForm();
+    onRefresh();
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItemId(null);
+    clearForm();
+  };
+
   const handleDeleteItem = async (id: string) => {
-    if (confirm("Remove this item?")) {
+    if (confirm("Are you sure you want to delete this site material record?")) {
       await onDeleteSiteMaterial(id);
       onRefresh();
     }
   };
 
-  // Filter items linked to chosen Work
   const currentWorkMaterials = siteMaterials.filter(m => m.entryId === selectedEntryId);
   const toDeliverList = currentWorkMaterials.filter(m => m.type === 'to_deliver');
   const deliveredList = currentWorkMaterials.filter(m => m.type === 'delivered');
-  // Apply search filter on specName
-  const filteredToDeliver = toDeliverList.filter(item =>
-    item.specName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const filteredDelivered = deliveredList.filter(item =>
-    item.specName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredToDeliver = toDeliverList;
+  const filteredDelivered = deliveredList;
+
+  // Calculate material balance summary
+  const summaryMap: { [key: string]: { estimated: number; delivered: number } } = {};
+  
+  toDeliverList.forEach(item => {
+    const name = item.specName;
+    if (!summaryMap[name]) {
+      summaryMap[name] = { estimated: 0, delivered: 0 };
+    }
+    summaryMap[name].estimated += item.estimatedQuantity;
+  });
+  
+  deliveredList.forEach(item => {
+    const name = item.specName;
+    if (!summaryMap[name]) {
+      summaryMap[name] = { estimated: 0, delivered: 0 };
+    }
+    summaryMap[name].delivered += item.deliveredQuantityInCft;
+  });
+  
+  const materialSummary = Object.entries(summaryMap).map(([specName, data]) => ({
+    specName,
+    estimated: data.estimated,
+    delivered: data.delivered,
+    balance: data.estimated - data.delivered
+  }));
+
+  // Combine entries and private works for dropdown
+  const filteredWorkOptions = [
+    ...entries.map(e => ({ id: e.id, name: e.workName, type: 'entry' as const })),
+    ...(privateWorks || []).map(p => ({ id: p.id, name: p.workName, type: 'private' as const }))
+  ].filter(opt => opt.name.toLowerCase().includes(workSearchQuery.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -1226,56 +1415,88 @@ const [searchQuery, setSearchQuery] = useState("");
         </button>
       </div>
       {/* Search Input */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search materials..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black"
+      <div className="relative w-64 mb-4">
+        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-neutral-400" />
+        <input 
+          type="text" placeholder="Search work name..." value={workSearchQuery} onChange={(e) => handleWorkSearch(e.target.value)}
+          className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
         />
       </div>
 
       {/* Select work name drop-down */}
-      <div className="border border-neutral-200 bg-white p-4 rounded">
-        <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Select Work Name</label>
-        <select 
-          value={selectedEntryId} onChange={(e) => setSelectedEntryId(e.target.value)}
-          className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold"
-        >
-          <option value="">-- Choose Contract Work --</option>
-          {entries.map(e => (
-            <option key={e.id} value={e.id}>{e.workName}</option>
-          ))}
-        </select>
+      <div className="border border-neutral-200 bg-white p-4 rounded space-y-4">
+        <div>
+          <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Select Work Name</label>
+          <select 
+            value={selectedEntryId} onChange={(e) => setSelectedEntryId(e.target.value)}
+            className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold text-black bg-white"
+          >
+            <option value="">-- Choose Work --</option>
+            {filteredWorkOptions.map(opt => (
+              <option key={opt.id} value={opt.id}>
+                {opt.name}{opt.type === 'private' ? " (Private)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {selectedEntry && (
+      {work && (
         <div className="space-y-6 animate-fade-in">
           {/* Work Metadata */}
           <div className="border border-neutral-200 bg-white p-4 rounded grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
             <div>
               <span className="text-neutral-400 block text-[9px] uppercase font-bold">Work Name</span>
-              <span className="font-bold">{selectedEntry.workName}</span>
+              <span className="font-bold">{work.workName}</span>
             </div>
             <div>
               <span className="text-neutral-400 block text-[9px] uppercase font-bold">Total Amount</span>
-              <span className="font-mono font-bold">₹{selectedEntry.amount.toLocaleString()}</span>
+              <span className="font-mono font-bold">₹{((work as any).amount ?? (work as any).approxAmount ?? 0).toLocaleString()}</span>
             </div>
             <div>
               <span className="text-neutral-400 block text-[9px] uppercase font-bold">Handover Date</span>
-              <span className="font-mono font-bold">{selectedEntry.siteHandoverDate.substring(0, 10)}</span>
+              <span className="font-mono font-bold">{((work as any).siteHandoverDate ?? (work as any).siteVisitDate ?? "").substring(0, 10)}</span>
             </div>
             <div>
               <span className="text-neutral-400 block text-[9px] uppercase font-bold">Completion Date</span>
-              <span className="font-mono font-bold">{selectedEntry.workCompletionDateAsPerAgreement.substring(0, 10)}</span>
+              <span className="font-mono font-bold">{((work as any).workCompletionDateAsPerAgreement ?? (work as any).completedDate ?? "").substring(0, 10)}</span>
+            </div>
+          </div>
+
+          {/* Material Balance Summary (Main Attraction) */}
+          <div className="border border-neutral-200 bg-white p-4 rounded space-y-3">
+            <h3 className="font-bold text-xs uppercase text-neutral-800 border-b border-neutral-100 pb-2">Material Balance Summary</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {materialSummary.map(m => {
+                let borderColor = "#a3a3a3";
+                if (m.balance > 0) borderColor = "#f59e0b"; // Orange/Amber
+                else if (m.balance === 0) borderColor = "#10b981"; // Green
+                else borderColor = "#ef4444"; // Red
+                
+                return (
+                  <div key={m.specName} style={{ borderLeftColor: borderColor }} className="border border-neutral-200 border-l-4 bg-neutral-50/50 p-3 rounded shadow-xs hover:shadow-sm transition-all duration-150">
+                    <div className="text-[10px] uppercase font-bold text-neutral-400">{m.specName} Balance</div>
+                    <div className="text-xl font-mono font-bold mt-1 text-black">
+                      {m.balance.toLocaleString()} CFT
+                    </div>
+                    <div className="text-[9px] text-neutral-500 mt-1">
+                      Delivered {m.delivered.toLocaleString()} of {m.estimated.toLocaleString()} CFT
+                    </div>
+                  </div>
+                );
+              })}
+              {materialSummary.length === 0 && (
+                <div className="col-span-2 md:col-span-4 text-xs text-neutral-400 text-center py-2">
+                  No materials estimated or delivered yet.
+                </div>
+              )}
             </div>
           </div>
 
           {showItemForm && (
             <form onSubmit={handleAddItem} className="border border-black bg-white p-4 rounded space-y-4">
               <h4 className="text-xs font-bold uppercase border-b border-neutral-100 pb-2">
-                Add item to {itemType === 'to_deliver' ? "Materials To Be Delivered" : "Stock Delivered In Site"}
+                Add item to {itemType === 'to_deliver' ? "Estimate Quantity" : "Actual Quantity delivered in site"}
               </h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
@@ -1284,7 +1505,27 @@ const [searchQuery, setSearchQuery] = useState("");
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Spec/Item Name</label>
-                  <input type="text" required value={specName} onChange={(e) => setSpecName(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs" />
+                  <select 
+                    required 
+                    value={specName} 
+                    onChange={(e) => setSpecName(e.target.value)} 
+                    className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs text-black bg-white focus:outline-none focus:border-black"
+                  >
+                    <option value="">-- Choose Item --</option>
+                    <option value="6mm">6mm</option>
+                    <option value="12mm">12mm</option>
+                    <option value="20mm">20mm</option>
+                    <option value="40mm">40mm</option>
+                    <option value="M Sand">M Sand</option>
+                    <option value="Dust">Dust</option>
+                    <option value="GSB">GSB</option>
+                    <option value="WMM">WMM</option>
+                    <option value="Cement">Cement</option>
+                    <option value="VG 30">VG 30</option>
+                    <option value="SS1">SS1</option>
+                    <option value="RS1">RS1</option>
+                    <option value="Rubble">Rubble</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Estimated Quantity</label>
@@ -1306,7 +1547,7 @@ const [searchQuery, setSearchQuery] = useState("");
           {/* Table 1: Materials To Be Delivered */}
           <div className="border border-neutral-200 bg-white rounded overflow-hidden">
             <div className="bg-neutral-50 p-3 border-b border-neutral-200 flex justify-between items-center">
-              <h3 className="font-bold text-xs uppercase text-neutral-800">1. Materials To Be Delivered To Site</h3>
+              <h3 className="font-bold text-xs uppercase text-neutral-800">1. Estimate Quantity</h3>
               <button 
                 onClick={() => { setItemType('to_deliver'); setShowItemForm(true); }}
                 className="px-2 py-1 bg-black text-white hover:bg-neutral-900 text-[10px] font-bold uppercase rounded flex items-center gap-1"
@@ -1327,21 +1568,48 @@ const [searchQuery, setSearchQuery] = useState("");
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {filteredToDeliver.map(item => (
-                  <tr key={item.id} className="hover:bg-neutral-50/50">
-                    <td className="p-3 font-mono">{item.itemSlNo}</td>
-                    <td className="p-3 font-semibold">{item.specName}</td>
-                    <td className="p-3 text-right font-mono">{item.estimatedQuantity}</td>
-                    <td className="p-3 text-right font-mono">{item.deliveredQuantityInCft}</td>
-                    <td className="p-3 text-right font-mono font-bold">{item.balanceQuantityInCft}</td>
-                    <td className="p-3 text-right font-mono font-bold text-black">{item.totalQuantityInSite}</td>
-                    <td className="p-3 text-right">
-                      <button onClick={() => handleDeleteItem(item.id)} className="text-neutral-500 hover:text-black">
-                        <Trash2 className="w-3.5 h-3.5 inline-block" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredToDeliver.map(item => {
+                  const actualDelivered = deliveredList
+                    .filter(d => d.specName === item.specName)
+                    .reduce((sum, d) => sum + d.deliveredQuantityInCft, 0);
+                  const currentBalance = item.estimatedQuantity - actualDelivered;
+                  
+                  return (
+                    <tr key={item.id} className="hover:bg-neutral-50/50">
+                      <td className="p-3 font-mono">{item.itemSlNo}</td>
+                      <td className="p-3 font-semibold">{item.specName}</td>
+                      <td className="p-3 text-right font-mono">
+                        {editingItemId === item.id && itemType === 'to_deliver' ? (
+                          <input type="number" value={estimatedQuantity} onChange={e => setEstimatedQuantity(Number(e.target.value))} className="w-16 p-0.5 border rounded" />
+                        ) : (
+                          item.estimatedQuantity
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-mono">{actualDelivered}</td>
+                      <td className="p-3 text-right font-mono font-bold">{currentBalance}</td>
+                      <td className="p-3 text-right font-mono font-bold text-black">{actualDelivered}</td>
+                      <td className="p-3 text-right">
+                        <div className="flex gap-2">
+                          {editingItemId === item.id && itemType === 'to_deliver' ? (
+                            <>
+                              <button onClick={() => handleSaveEdit(item.id)} className="text-green-600 hover:text-green-800 mr-2">Save</button>
+                              <button onClick={handleCancelEdit} className="text-red-600 hover:text-red-800">Cancel</button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => handleEditItem(item, 'to_deliver')} className="text-neutral-500 hover:text-black">
+                                <Edit2 className="w-3.5 h-3.5 inline-block" />
+                              </button>
+                              <button onClick={() => handleDeleteItem(item.id)} className="text-neutral-500 hover:text-black">
+                                <Trash2 className="w-3.5 h-3.5 inline-block" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filteredToDeliver.length === 0 && (
                   <tr>
                     <td colSpan={7} className="p-4 text-center text-neutral-400">No estimated delivery plans logged.</td>
@@ -1354,7 +1622,7 @@ const [searchQuery, setSearchQuery] = useState("");
           {/* Table 2: Stock Delivered In Site */}
           <div className="border border-neutral-200 bg-white rounded overflow-hidden">
             <div className="bg-neutral-50 p-3 border-b border-neutral-200 flex justify-between items-center">
-              <h3 className="font-bold text-xs uppercase text-neutral-800">2. Stock Delivered In Site</h3>
+              <h3 className="font-bold text-xs uppercase text-neutral-800">2. Actual Quantity delivered in site</h3>
               <button 
                 onClick={() => { setItemType('delivered'); setShowItemForm(true); }}
                 className="px-2 py-1 bg-black text-white hover:bg-neutral-900 text-[10px] font-bold uppercase rounded flex items-center gap-1"
@@ -1375,21 +1643,61 @@ const [searchQuery, setSearchQuery] = useState("");
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
-                {filteredDelivered.map(item => (
-                  <tr key={item.id} className="hover:bg-neutral-50/50">
-                    <td className="p-3 font-mono">{item.itemSlNo}</td>
-                    <td className="p-3 font-semibold">{item.specName}</td>
-                    <td className="p-3 text-right font-mono">{item.estimatedQuantity}</td>
-                    <td className="p-3 text-right font-mono">{item.deliveredQuantityInCft}</td>
-                    <td className="p-3 text-right font-mono font-bold">{item.balanceQuantityInCft}</td>
-                    <td className="p-3 text-right font-mono font-bold text-black">{item.totalQuantityInSite}</td>
-                    <td className="p-3 text-right">
-                      <button onClick={() => handleDeleteItem(item.id)} className="text-neutral-500 hover:text-black">
-                        <Trash2 className="w-3.5 h-3.5 inline-block" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredDelivered.map(item => {
+                  const totalEstimated = toDeliverList
+                    .filter(est => est.specName === item.specName)
+                    .reduce((sum, est) => sum + est.estimatedQuantity, 0);
+                  const totalDelivered = deliveredList
+                    .filter(d => d.specName === item.specName)
+                    .reduce((sum, d) => sum + d.deliveredQuantityInCft, 0);
+                  const overallBalance = totalEstimated - totalDelivered;
+                  
+                  const isEstimated = toDeliverList.some(est => est.specName === item.specName);
+                  const isOverDelivered = isEstimated && totalDelivered > totalEstimated;
+                  
+                  let rowStyle = {};
+                  if (!isEstimated) {
+                    rowStyle = { backgroundColor: '#fee2e2', color: '#7f1d1d' };
+                  } else if (isOverDelivered) {
+                    rowStyle = { backgroundColor: '#ffedd5', color: '#7c2d12' };
+                  }
+                  
+                  return (
+                    <tr key={item.id} style={rowStyle} className="hover:bg-neutral-50/50 transition-colors">
+                      <td className="p-3 font-mono">{item.itemSlNo}</td>
+                      <td className="p-3 font-semibold">{item.specName}</td>
+                      <td className="p-3 text-right font-mono">{totalEstimated}</td>
+                      <td className="p-3 text-right font-mono">
+                        {editingItemId === item.id && itemType === 'delivered' ? (
+                          <input type="number" value={deliveredQuantity} onChange={e => setDeliveredQuantity(Number(e.target.value))} className="w-16 p-0.5 border rounded" />
+                        ) : (
+                          item.deliveredQuantityInCft
+                        )}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold">{overallBalance}</td>
+                      <td className="p-3 text-right font-mono font-bold">{totalDelivered}</td>
+                      <td className="p-3 text-right">
+                        <div className="flex gap-2">
+                          {editingItemId === item.id && itemType === 'delivered' ? (
+                            <>
+                              <button onClick={() => handleSaveEdit(item.id)} className="text-green-600 hover:text-green-800 mr-2">Save</button>
+                              <button onClick={handleCancelEdit} className="text-red-600 hover:text-red-800">Cancel</button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => handleEditItem(item, 'delivered')} className="text-neutral-500 hover:text-black">
+                                <Edit2 className="w-3.5 h-3.5 inline-block" />
+                              </button>
+                              <button onClick={() => handleDeleteItem(item.id)} className="text-neutral-500 hover:text-black">
+                                <Trash2 className="w-3.5 h-3.5 inline-block" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {filteredDelivered.length === 0 && (
                   <tr>
                     <td colSpan={7} className="p-4 text-center text-neutral-400">No site arrivals registered yet.</td>
@@ -1486,9 +1794,9 @@ export function PrivateWorkView({
     setApproxAmount(w.approxAmount);
     setLocation(w.location);
     setRelatedToContractWork(w.relatedToContractWork || "");
-    setSiteVisitDate(w.siteVisitDate.substring(0, 10));
+    setSiteVisitDate(formatDate(w.siteVisitDate));
     setRoadWorkNature(w.roadWorkNature);
-    setCompletedDate(w.completedDate.substring(0, 10));
+    setCompletedDate(formatDate(w.completedDate));
     setAdvanceReceived(w.advanceReceived);
     setApproxFinalWorkAmount(w.approxFinalWorkAmount);
     setPaymentReceived(w.paymentReceived);
@@ -1663,7 +1971,7 @@ export function PrivateWorkView({
                   <td className="p-3 text-right font-mono font-bold">₹{w.approxFinalWorkAmount.toLocaleString()}</td>
                   <td className="p-3 text-right font-mono text-neutral-600">₹{w.paymentReceived.toLocaleString()}</td>
                   <td className="p-3 text-right font-mono font-bold">₹{w.paymentBalance.toLocaleString()}</td>
-                  <td className="p-3 text-right font-mono">{w.completedDate.substring(0, 10)}</td>
+                  <td className="p-3 text-right font-mono">{formatDate(w.completedDate)}</td>
                   <td className="p-3 text-right">
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => handleEdit(w)} className="p-1 hover:bg-neutral-100 rounded text-neutral-600">
@@ -1712,7 +2020,7 @@ export function TarLoadView({
 
   // States
   const [purchasedFrom, setPurchasedFrom] = useState("");
-  const [item, setItem] = useState<'RS1' | 'SS1' | 'VG30'>("VG30");
+  const [item, setItem] = useState<'Cement' | 'RS1' | 'SS1' | 'VG30'>("VG30");
   const [quantityInKg, setQuantityInKg] = useState(0);
   const [loadInNoOfPack, setLoadInNoOfPack] = useState(0);
   const [addressedOffice, setAddressedOffice] = useState("");
@@ -1771,7 +2079,7 @@ export function TarLoadView({
     setAddressedOffice(load.addressedOffice);
     setAmountPerLoad(load.amountPerLoad || 0);
     setPaidAmount(load.paidAmount);
-    setPurchasedDate(load.purchasedDate.substring(0, 10));
+    setPurchasedDate(formatDate(load.purchasedDate));
     setBillingNameBuyer(load.billingNameBuyer);
     setRemarks(load.remarks || "");
     setShowForm(true);
@@ -1871,9 +2179,10 @@ export function TarLoadView({
                 value={item} onChange={(e) => setItem(e.target.value as any)}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black"
               >
-                <option value="VG30">VG30 Bitumen</option>
-                <option value="RS1">RS1 Emulsion</option>
-                <option value="SS1">SS1 Emulsion</option>
+                <option value="Cement">Cement</option>
+                <option value="RS1">RS1</option>
+                <option value="SS1">SS1</option>
+                <option value="VG30">VG30</option>
               </select>
             </div>
             <div>
@@ -1978,7 +2287,7 @@ export function TarLoadView({
             <tbody className="divide-y divide-neutral-100">
               {filtered.map(load => (
                 <tr key={load.id} className="hover:bg-neutral-50/50">
-                  <td className="p-3 font-mono">{load.purchasedDate.substring(0, 10)}</td>
+                  <td className="p-3 font-mono">{formatDate(load.purchasedDate)}</td>
                   <td className="p-3 font-bold">{load.purchasedFrom}</td>
                   <td className="p-3"><span className="border border-neutral-300 px-1 py-0.5 rounded font-bold font-mono">{load.item}</span></td>
                   <td className="p-3 text-right font-mono">{load.quantityInKg.toLocaleString()} KG</td>
@@ -2016,6 +2325,7 @@ export function TarLoadView({
 // ==========================================
 export function WorkBasedEntryView({
   entries,
+  privateWorks = [],
   workBasedEntries,
   onRefresh,
   onCreateWorkBasedEntry,
@@ -2024,6 +2334,7 @@ export function WorkBasedEntryView({
   onNavigate
 }: {
   entries: Entry[];
+  privateWorks?: PrivateWork[];
   workBasedEntries: WorkBasedEntry[];
   onRefresh: () => void;
   onCreateWorkBasedEntry: (data: any) => Promise<any>;
@@ -2032,7 +2343,28 @@ export function WorkBasedEntryView({
   onNavigate: (tab: string) => void}) {
   const [selectedEntryId, setSelectedEntryId] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  const handleWorkSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query) {
+      setSelectedEntryId("");
+      return;
+    }
+    const combined = [
+      ...entries.map(e => ({ id: e.id, name: e.workName })),
+      ...(privateWorks || []).map(p => ({ id: p.id, name: p.workName }))
+    ];
+    const match = combined.find(opt => 
+      opt.name.toLowerCase().includes(query.toLowerCase())
+    );
+    if (match) {
+      setSelectedEntryId(match.id);
+    } else {
+      setSelectedEntryId("");
+    }
+  };
 
   // States
   const [itemSlNo, setItemSlNo] = useState("");
@@ -2091,6 +2423,11 @@ export function WorkBasedEntryView({
   const filteredItems = workBasedEntries.filter(wbe => wbe.entryId === selectedEntryId);
   const totalBOQValuation = filteredItems.reduce((sum, item) => sum + item.totalAmountPerItem, 0);
 
+  const filteredWorkOptions = [
+    ...entries.map(e => ({ id: e.id, name: e.workName, type: 'entry' as const })),
+    ...(privateWorks || []).map(p => ({ id: p.id, name: p.workName, type: 'private' as const }))
+  ].filter(opt => opt.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
     <div className="space-y-6">
       <div>
@@ -2098,17 +2435,30 @@ export function WorkBasedEntryView({
         <p className="text-xs text-neutral-500 font-medium">Link detailed bill-of-quantities (BOQ) specifications and rates to concrete projects.</p>
       </div>
 
-      <div className="border border-neutral-200 bg-white p-4 rounded">
-        <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Select Work Name</label>
-        <select 
-          value={selectedEntryId} onChange={(e) => setSelectedEntryId(e.target.value)}
-          className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold"
-        >
-          <option value="">-- Select Active Work --</option>
-          {entries.map(e => (
-            <option key={e.id} value={e.id}>{e.workName}</option>
-          ))}
-        </select>
+      {/* Search Input */}
+      <div className="relative w-64 mb-4">
+        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-neutral-400" />
+        <input 
+          type="text" placeholder="Search work name..." value={searchQuery} onChange={(e) => handleWorkSearch(e.target.value)}
+          className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
+        />
+      </div>
+
+      <div className="border border-neutral-200 bg-white p-4 rounded space-y-4">
+        <div>
+          <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Select Work Name</label>
+          <select 
+            value={selectedEntryId} onChange={(e) => setSelectedEntryId(e.target.value)}
+            className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold text-black bg-white"
+          >
+            <option value="">-- Select Active Work --</option>
+            {filteredWorkOptions.map(opt => (
+              <option key={opt.id} value={opt.id}>
+                {opt.name}{opt.type === 'private' ? " (Private)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {selectedEntryId && (
@@ -2198,7 +2548,20 @@ export function WorkBasedEntryView({
                       </div>
                     </td>
                   </tr>
-                ))}
+                 ))}
+                {filteredItems.length > 0 && (
+                  <tr className="bg-neutral-50 font-bold border-t-2 border-neutral-200">
+                    <td className="p-3"></td>
+                    <td className="p-3 text-left">TOTAL</td>
+                    <td className="p-3"></td>
+                    <td className="p-3"></td>
+                    <td className="p-3"></td>
+                    <td className="p-3 text-right font-mono text-black border-l border-neutral-200">
+                      ₹{totalBOQValuation.toLocaleString()}
+                    </td>
+                    <td className="p-3"></td>
+                  </tr>
+                )}
                 {filteredItems.length === 0 && (
                   <tr>
                     <td colSpan={7} className="p-6 text-center text-neutral-400">No BOQ items logged for this work entry.</td>
@@ -2218,10 +2581,14 @@ export function WorkBasedEntryView({
 // ==========================================
 export function WorkBasedRegisterView({
   entries,
-  workBasedEntries
+  privateWorks = [],
+  workBasedEntries,
+  expenses = []
 }: {
   entries: Entry[];
+  privateWorks?: PrivateWork[];
   workBasedEntries: WorkBasedEntry[];
+  expenses?: Expense[];
 }) {
   const [selectedEntryId, setSelectedEntryId] = useState("");
   const [keyword, setKeyword] = useState("");
@@ -2234,24 +2601,70 @@ export function WorkBasedRegisterView({
   const [notStarted, setNotStarted] = useState(true);
   const [completed, setCompleted] = useState(true);
 
-  const selectedEntry = entries.find(e => e.id === selectedEntryId);
+  // Combine entries and private works for unified register filtering
+  const allWorks = [
+    ...entries.map(e => ({
+      id: e.id,
+      workName: e.workName,
+      amount: e.amount,
+      mlaMpName: e.mlaMpName || "",
+      agreementNo: e.agreementNo || "",
+      status: e.status,
+      type: 'entry' as const,
+      original: e
+    })),
+    ...(privateWorks || []).map(p => ({
+      id: p.id,
+      workName: p.workName,
+      amount: p.approxFinalWorkAmount,
+      mlaMpName: "",
+      agreementNo: "",
+      status: 'Ongoing' as const,
+      type: 'private' as const,
+      original: p
+    }))
+  ];
 
   // Filter the list of entries shown in dropdown/tables
-  const filteredEntries = entries.filter(e => {
-    if (keyword && !e.workName.toLowerCase().includes(keyword.toLowerCase()) && !e.agreementNo.toLowerCase().includes(keyword.toLowerCase())) return false;
-    if (minAmount && e.amount < Number(minAmount)) return false;
-    if (mlaMp && !e.mlaMpName?.toLowerCase().includes(mlaMp.toLowerCase())) return false;
+  const filteredWorks = allWorks.filter(w => {
+    if (keyword) {
+      const matchName = w.workName.toLowerCase().includes(keyword.toLowerCase());
+      const matchAgreement = w.agreementNo.toLowerCase().includes(keyword.toLowerCase());
+      if (!matchName && !matchAgreement) return false;
+    }
+    if (minAmount && !String(w.amount).includes(minAmount)) return false;
+    if (mlaMp && !w.mlaMpName.toLowerCase().includes(mlaMp.toLowerCase())) return false;
     
     // Status filter
-    if (e.status === 'Ongoing' && !ongoing) return false;
-    if (e.status === 'Pending' && !pending) return false;
-    if (e.status === 'Not Started' && !notStarted) return false;
-    if (e.status === 'Completed' && !completed) return false;
+    if (w.status === 'Ongoing' && !ongoing) return false;
+    if (w.status === 'Pending' && !pending) return false;
+    if (w.status === 'Not Started' && !notStarted) return false;
+    if (w.status === 'Completed' && !completed) return false;
 
     return true;
   });
 
+  // Automatically select the first matching work when filters change
+  const filtersActive = keyword || minAmount || mlaMp || !ongoing || !pending || !notStarted || !completed;
+  
+  useEffect(() => {
+    if (filtersActive && filteredWorks.length > 0) {
+      setSelectedEntryId(filteredWorks[0].id);
+    } else if (filtersActive && filteredWorks.length === 0) {
+      setSelectedEntryId("");
+    } else if (!filtersActive) {
+      // No filters active — clear auto-selection so user picks manually
+      setSelectedEntryId("");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keyword, minAmount, mlaMp, ongoing, pending, notStarted, completed]);
+
+  const selectedWork = allWorks.find(w => w.id === selectedEntryId);
   const boqItems = workBasedEntries.filter(wbe => wbe.entryId === selectedEntryId);
+  const workExpenses = expenses.filter(exp => exp.workId === selectedEntryId);
+  const totalWorkExpenses = workExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const projectedProfit = selectedWork ? selectedWork.amount - totalWorkExpenses : 0;
+  const realizedProfit = selectedWork ? (selectedWork.original.paymentReceived || 0) - totalWorkExpenses : 0;
 
   return (
     <div className="space-y-6">
@@ -2273,32 +2686,37 @@ export function WorkBasedRegisterView({
               className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold"
             >
               <option value="">-- Choose Contract Work --</option>
-              {filteredEntries.map(e => (
-                <option key={e.id} value={e.id}>{e.workName}</option>
+              {filteredWorks.map(w => (
+                <option key={w.id} value={w.id}>
+                  {w.workName}{w.type === 'private' ? " (Private)" : ""}
+                </option>
               ))}
             </select>
           </div>
           <div>
             <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Keyword Search</label>
-            <input 
-              type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
-              className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none"
-              placeholder="Work Name or Agreement No"
-            />
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-neutral-400" />
+              <input 
+                type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
+                placeholder="Work Name or Agreement No"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Min Contract Amount (₹)</label>
+            <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Search Contract Amount (₹)</label>
             <input 
-              type="number" value={minAmount} onChange={(e) => setMinAmount(e.target.value)}
-              className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none"
-              placeholder="e.g. 1000000"
+              type="text" value={minAmount} onChange={(e) => setMinAmount(e.target.value)}
+              className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black"
+              placeholder="e.g. 240000"
             />
           </div>
           <div>
             <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">MP/MLA Sponsor</label>
             <input 
               type="text" value={mlaMp} onChange={(e) => setMlaMp(e.target.value)}
-              className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none"
+              className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black"
               placeholder="MLA/MP Name"
             />
           </div>
@@ -2326,13 +2744,75 @@ export function WorkBasedRegisterView({
         </div>
       </div>
 
-      {selectedEntry && (
+      {/* Matching Works Results Table */}
+      <div className="border border-neutral-200 bg-white rounded overflow-hidden">
+        <div className="p-3 bg-neutral-50 border-b border-neutral-200">
+          <h3 className="font-bold text-xs uppercase text-neutral-800">Matching Contract & Private Works ({filteredWorks.length})</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] text-neutral-400">
+                <th className="p-3">Work Name</th>
+                <th className="p-3">Type</th>
+                <th className="p-3 text-right">Contract Value</th>
+                <th className="p-3">Sponsor / MLA-MP</th>
+                <th className="p-3">Status</th>
+                <th className="p-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {filteredWorks.map(w => (
+                <tr key={w.id} className={`hover:bg-neutral-50/50 ${selectedEntryId === w.id ? 'bg-neutral-50 font-semibold' : ''}`}>
+                  <td className="p-3 font-semibold text-black">{w.workName}</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-neutral-100 text-neutral-800 border border-neutral-200">
+                      {w.type === 'private' ? 'Private' : 'Contract'}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right font-mono font-bold text-black">₹{w.amount.toLocaleString()}</td>
+                  <td className="p-3 text-neutral-600">{w.mlaMpName || "N/A"}</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-neutral-50 text-neutral-700 border border-neutral-100">
+                      {w.status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right">
+                    <button 
+                      onClick={() => setSelectedEntryId(w.id)}
+                      className={`px-2 py-1 text-[10px] font-bold rounded cursor-pointer ${selectedEntryId === w.id ? 'bg-neutral-200 text-black border border-neutral-300' : 'bg-black text-white hover:bg-neutral-900'}`}
+                    >
+                      {selectedEntryId === w.id ? 'Active' : 'Select'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredWorks.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-neutral-400 font-medium">
+                    No matching works found for the current filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {selectedWork && (
         <div className="space-y-6 animate-fade-in bg-white border border-neutral-200 rounded p-6">
           <div className="flex justify-between items-start border-b border-neutral-100 pb-4">
             <div>
-              <span className="text-[9px] uppercase font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded">{selectedEntry.status}</span>
-              <h3 className="text-lg font-bold text-black mt-1">{selectedEntry.workName}</h3>
-              <p className="text-xs text-neutral-500 font-mono mt-0.5">Agreement Number: {selectedEntry.agreementNo || "Pending"}</p>
+              <span className="text-[9px] uppercase font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded">
+                {selectedWork.type === 'private' ? 'Private Work' : selectedWork.status}
+              </span>
+              <h3 className="text-lg font-bold text-black mt-1">{selectedWork.workName}</h3>
+              <p className="text-xs text-neutral-500 font-mono mt-0.5">
+                {selectedWork.type === 'private' 
+                  ? `Private Client Reference ID: ${selectedWork.id}` 
+                  : `Agreement Number: ${selectedWork.agreementNo || "Pending"}`
+                }
+              </p>
             </div>
             <button 
               onClick={() => window.print()}
@@ -2342,49 +2822,133 @@ export function WorkBasedRegisterView({
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs pt-4">
-            <div className="space-y-3">
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Office Wing</span>
-                <span className="font-semibold text-neutral-900">{selectedEntry.nameOfOffice}</span>
+          {selectedWork.type === 'entry' ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs pt-4">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Office Wing</span>
+                  <span className="font-semibold text-neutral-900">{selectedWork.original.nameOfOffice}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">MLA/MP Sponsor</span>
+                  <span className="font-semibold text-neutral-900">{selectedWork.original.mlaMpName || "N/A"}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Contract Value</span>
+                  <span className="font-mono font-bold text-black text-sm">₹{selectedWork.original.amount.toLocaleString()}</span>
+                </div>
               </div>
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">MLA/MP Sponsor</span>
-                <span className="font-semibold text-neutral-900">{selectedEntry.mlaMpName || "N/A"}</span>
+
+              <div className="space-y-3">
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">LOA Issued Status</span>
+                  <span className="font-semibold text-neutral-900">{selectedWork.original.loaReceived ? "Yes, Agreement Completed" : "No, Under SLA Review"}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Last Date to Execute Agreement</span>
+                  <span className="font-mono font-semibold text-neutral-900">{selectedWork.original.lastDateToExecuteAgreement ? new Date(selectedWork.original.lastDateToExecuteAgreement).toISOString().substring(0,10) : ""}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">DLP Period</span>
+                  <span className="font-semibold text-neutral-900">{selectedWork.original.dlpPeriodAsPerInLOA}</span>
+                </div>
               </div>
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Contract Value</span>
-                <span className="font-mono font-bold text-black text-sm">₹{selectedEntry.amount.toLocaleString()}</span>
+
+              <div className="space-y-3 border-l border-neutral-100 pl-0 md:pl-6">
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Security Amount Deposit</span>
+                  <span className="font-mono font-semibold text-neutral-900">₹{selectedWork.original.securityAmount.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Performance Guarantee</span>
+                  <span className="font-mono font-semibold text-neutral-900">₹{selectedWork.original.performanceGuarantee.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Payment Settled</span>
+                  <span className="font-mono font-bold text-neutral-900">₹{(selectedWork.original.paymentReceived || 0).toLocaleString()}</span>
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs pt-4">
+              <div className="space-y-3">
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Location</span>
+                  <span className="font-semibold text-neutral-900">{selectedWork.original.location}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Nature of Work</span>
+                  <span className="font-semibold text-neutral-900">{selectedWork.original.roadWorkNature || "Civil construction"}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Approximate Amount</span>
+                  <span className="font-mono font-bold text-black text-sm">₹{selectedWork.original.approxAmount.toLocaleString()}</span>
+                </div>
+              </div>
 
-            <div className="space-y-3">
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">LOA Issued Status</span>
-                <span className="font-semibold text-neutral-900">{selectedEntry.loaReceived ? "Yes, Agreement Completed" : "No, Under SLA Review"}</span>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Work Status</span>
+                  <span className="font-semibold text-neutral-900">Private Project execution</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Site Visit Date</span>
+                  <span className="font-mono font-semibold text-neutral-900">{selectedWork.original.siteVisitDate ? new Date(selectedWork.original.siteVisitDate).toISOString().substring(0,10) : "N/A"}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Completion Target</span>
+                  <span className="font-mono font-semibold text-neutral-900">{selectedWork.original.completedDate ? new Date(selectedWork.original.completedDate).toISOString().substring(0,10) : "N/A"}</span>
+                </div>
               </div>
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Last Date to Execute Agreement</span>
-                <span className="font-mono font-semibold text-neutral-900">{selectedEntry.lastDateToExecuteAgreement.substring(0, 10)}</span>
-              </div>
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">DLP Period</span>
-                <span className="font-semibold text-neutral-900">{selectedEntry.dlpPeriodAsPerInLOA}</span>
+
+              <div className="space-y-3 border-l border-neutral-100 pl-0 md:pl-6">
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Advance Payment Received</span>
+                  <span className="font-mono font-semibold text-neutral-900">₹{selectedWork.original.advanceReceived.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Total Payment Settled</span>
+                  <span className="font-mono font-semibold text-neutral-900">₹{selectedWork.original.paymentReceived.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="text-neutral-400 block text-[9px] uppercase font-bold">Outstanding Balance</span>
+                  <span className="font-mono font-bold text-neutral-900">₹{selectedWork.original.paymentBalance.toLocaleString()}</span>
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="space-y-3 border-l border-neutral-100 pl-0 md:pl-6">
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Security Amount Deposit</span>
-                <span className="font-mono font-semibold text-neutral-900">₹{selectedEntry.securityAmount.toLocaleString()}</span>
+          {/* Profitability & Financial Ledger */}
+          <div className="border border-neutral-200 rounded overflow-hidden mt-6 bg-white">
+            <div className="bg-neutral-50 p-3 border-b border-neutral-200">
+              <h4 className="font-bold text-xs uppercase text-neutral-800">Project Profitability & Financial Health</h4>
+            </div>
+            <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+              <div className="border border-neutral-100 p-3 rounded">
+                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Total Work Revenue</span>
+                <span className="font-mono font-bold text-black text-sm">₹{selectedWork.amount.toLocaleString()}</span>
               </div>
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Performance Guarantee</span>
-                <span className="font-mono font-semibold text-neutral-900">₹{selectedEntry.performanceGuarantee.toLocaleString()}</span>
+              <div className="border border-neutral-100 p-3 rounded">
+                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Total Project Expenses</span>
+                <span className="font-mono font-bold text-neutral-600 text-sm">₹{totalWorkExpenses.toLocaleString()}</span>
               </div>
-              <div>
-                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Payment Settled</span>
-                <span className="font-mono font-bold text-neutral-900">₹{(selectedEntry.paymentReceived || 0).toLocaleString()}</span>
+              <div className="border border-neutral-100 p-3 rounded">
+                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Estimated Net Profit</span>
+                <span className={`font-mono font-bold text-sm ${projectedProfit >= 0 ? 'text-black font-extrabold' : 'text-red-600'}`}>
+                  ₹{projectedProfit.toLocaleString()}
+                </span>
+                <span className="text-[10px] text-neutral-500 block mt-1">
+                  Margin: {selectedWork.amount > 0 ? ((projectedProfit / selectedWork.amount) * 100).toFixed(1) : 0}%
+                </span>
+              </div>
+              <div className="border border-neutral-100 p-3 rounded">
+                <span className="text-neutral-400 block text-[9px] uppercase font-bold">Realized Cash Margin</span>
+                <span className={`font-mono font-bold text-sm ${realizedProfit >= 0 ? 'text-black font-extrabold' : 'text-red-600'}`}>
+                  ₹{realizedProfit.toLocaleString()}
+                </span>
+                <span className="text-[10px] text-neutral-500 block mt-1">
+                  Received: ₹{(selectedWork.original.paymentReceived || 0).toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -2418,6 +2982,18 @@ export function WorkBasedRegisterView({
                     </td>
                   </tr>
                 ))}
+                {boqItems.length > 0 && (
+                  <tr className="bg-neutral-50 font-bold border-t-2 border-neutral-200">
+                    <td className="p-3"></td>
+                    <td className="p-3 text-left">TOTAL</td>
+                    <td className="p-3"></td>
+                    <td className="p-3"></td>
+                    <td className="p-3"></td>
+                    <td className="p-3 text-right font-mono text-black border-l border-neutral-200">
+                      ₹{boqItems.reduce((sum, item) => sum + item.totalAmountPerItem, 0).toLocaleString()}
+                    </td>
+                  </tr>
+                )}
                 {boqItems.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-neutral-400">No linked estimate items found.</td>
@@ -2441,11 +3017,16 @@ export function OfficeWiseWorkView({
   entries: Entry[];
 }) {
   const [selectedOffice, setSelectedOffice] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const officeNames = Array.from(new Set(entries.map(e => e.nameOfOffice)));
-  const filteredEntries = selectedOffice 
+  const filteredEntries = (selectedOffice 
     ? entries.filter(e => e.nameOfOffice === selectedOffice) 
-    : entries;
+    : entries
+  ).filter(e => 
+    e.workName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (e.agreementNo || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -2454,17 +3035,28 @@ export function OfficeWiseWorkView({
         <p className="text-xs text-neutral-500 font-medium">Filter consolidated contract items by regional office divisions or municipal departments.</p>
       </div>
 
-      <div className="border border-neutral-200 bg-white p-4 rounded">
-        <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Select Office Wing / Division</label>
-        <select 
-          value={selectedOffice} onChange={(e) => setSelectedOffice(e.target.value)}
-          className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold"
-        >
-          <option value="">-- All Office Wings --</option>
-          {officeNames.map(office => (
-            <option key={office} value={office}>{office}</option>
-          ))}
-        </select>
+      {/* Search Input */}
+      <div className="relative w-64 mb-4">
+        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-neutral-400" />
+        <input 
+          type="text" placeholder="Search work title or agreement..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
+        />
+      </div>
+
+      <div className="border border-neutral-200 bg-white p-4 rounded space-y-4">
+        <div>
+          <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Select Office Wing / Division</label>
+          <select 
+            value={selectedOffice} onChange={(e) => setSelectedOffice(e.target.value)}
+            className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold text-black bg-white"
+          >
+            <option value="">-- All Office Wings --</option>
+            {officeNames.map(office => (
+              <option key={office} value={office}>{office}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="border border-neutral-200 bg-white rounded overflow-hidden">
@@ -2491,7 +3083,7 @@ export function OfficeWiseWorkView({
                     {e.status}
                   </span>
                 </td>
-                <td className="p-3 text-right font-mono">{e.workCompletionDateAsPerAgreement.substring(0, 10)}</td>
+                <td className="p-3 text-right font-mono">{formatDate(e.workCompletionDateAsPerAgreement)}</td>
               </tr>
             ))}
             {filteredEntries.length === 0 && (
@@ -2519,6 +3111,23 @@ export function WorkStatusUpdationView({
   onUpdateEntry: (id: string, data: any) => Promise<any>;
 }) {
   const [selectedEntryId, setSelectedEntryId] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleWorkSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query) {
+      setSelectedEntryId("");
+      return;
+    }
+    const match = entries.find(e => 
+      e.workName.toLowerCase().includes(query.toLowerCase())
+    );
+    if (match) {
+      handleSelectWork(match.id);
+    } else {
+      setSelectedEntryId("");
+    }
+  };
 
   // States
   const [workName, setWorkName] = useState("");
@@ -2550,14 +3159,14 @@ export function WorkStatusUpdationView({
     setNameOfOffice(entry.nameOfOffice);
     setMlaMpName(entry.mlaMpName || "");
     setLoaReceived(entry.loaReceived);
-    setLastDateToExecuteAgreement(entry.lastDateToExecuteAgreement.substring(0, 10));
+    setLastDateToExecuteAgreement(formatDate(entry.lastDateToExecuteAgreement));
     setAmountOfStampPaperRequired(entry.amountOfStampPaperRequired);
     setSecurityAmount(entry.securityAmount);
     setPerformanceGuarantee(entry.performanceGuarantee);
     setDlpPeriodAsPerInLOA(entry.dlpPeriodAsPerInLOA);
     setAgreementNo(entry.agreementNo);
-    setSiteHandoverDate(entry.siteHandoverDate.substring(0, 10));
-    setWorkCompletionDateAsPerAgreement(entry.workCompletionDateAsPerAgreement.substring(0, 10));
+    setSiteHandoverDate(formatDate(entry.siteHandoverDate));
+    setWorkCompletionDateAsPerAgreement(formatDate(entry.workCompletionDateAsPerAgreement));
     setStatus(entry.status);
     setPaymentReceived(entry.paymentReceived || 0);
   };
@@ -2587,6 +3196,10 @@ export function WorkStatusUpdationView({
     onRefresh();
   };
 
+  const filteredEntries = entries.filter(e => 
+    e.workName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -2594,17 +3207,28 @@ export function WorkStatusUpdationView({
         <p className="text-xs text-neutral-500 font-medium">Select an active contract to modify field logs, execute revisions, and toggle completion states.</p>
       </div>
 
-      <div className="border border-neutral-200 bg-white p-4 rounded">
-        <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Work Selector</label>
-        <select 
-          value={selectedEntryId} onChange={(e) => handleSelectWork(e.target.value)}
-          className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold"
-        >
-          <option value="">-- Select Work To Update --</option>
-          {entries.map(e => (
-            <option key={e.id} value={e.id}>{e.workName}</option>
-          ))}
-        </select>
+      {/* Search Input */}
+      <div className="relative w-64 mb-4">
+        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-neutral-400" />
+        <input 
+          type="text" placeholder="Search work name..." value={searchQuery} onChange={(e) => handleWorkSearch(e.target.value)}
+          className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
+        />
+      </div>
+
+      <div className="border border-neutral-200 bg-white p-4 rounded space-y-4">
+        <div>
+          <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Work Selector</label>
+          <select 
+            value={selectedEntryId} onChange={(e) => handleSelectWork(e.target.value)}
+            className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold text-black bg-white"
+          >
+            <option value="">-- Select Work To Update --</option>
+            {filteredEntries.map(e => (
+              <option key={e.id} value={e.id}>{e.workName}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {message && (
@@ -2745,3 +3369,582 @@ export function WorkStatusUpdationView({
     </div>
   );
 }
+
+// ==========================================
+// MODULE 11 – EXPENSE UPDATION
+// ==========================================
+const descriptionOptions = [
+  "Labour",
+  "Food",
+  "Machine Rent",
+  "Water",
+  "Petrol",
+  "Diesel",
+  "Site Fee",
+  "Others"
+];
+
+export function ExpenseUpdationView({
+  entries,
+  privateWorks = [],
+  expenses = [],
+  onRefresh,
+  onCreateExpense,
+  onUpdateExpense,
+  onDeleteExpense,
+  onNavigate
+}: {
+  entries: Entry[];
+  privateWorks?: PrivateWork[];
+  expenses: Expense[];
+  onRefresh: () => void;
+  onCreateExpense: (data: any) => Promise<any>;
+  onUpdateExpense: (id: string, data: any) => Promise<any>;
+  onDeleteExpense: (id: string) => Promise<any>;
+  onNavigate: (tab: string) => void;
+}) {
+  const [selectedEntryId, setSelectedEntryId] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const getLocalDateString = () => {
+    const d = new Date();
+    const tzOffset = d.getTimezoneOffset() * 60000; // in ms
+    const localISOTime = new Date(d.getTime() - tzOffset).toISOString().slice(0, 10);
+    return localISOTime;
+  };
+
+  // Form Fields
+  const [date, setDate] = useState(getLocalDateString());
+  const [description, setDescription] = useState("Labour");
+  const [customDescription, setCustomDescription] = useState("");
+  const [amount, setAmount] = useState<number | "">("");
+
+  useEffect(() => {
+    if (!editingId && !showForm) {
+      setDate(getLocalDateString());
+      setDescription("Labour");
+      setCustomDescription("");
+      setAmount("");
+    }
+  }, [editingId, showForm]);
+
+  const handleWorkSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query) {
+      setSelectedEntryId("");
+      return;
+    }
+    const combined = [
+      ...entries.map(e => ({ id: e.id, name: e.workName })),
+      ...(privateWorks || []).map(p => ({ id: p.id, name: p.workName }))
+    ];
+    const match = combined.find(opt => 
+      opt.name.toLowerCase().includes(query.toLowerCase())
+    );
+    if (match) {
+      setSelectedEntryId(match.id);
+    } else {
+      setSelectedEntryId("");
+    }
+  };
+
+  const clearForm = () => {
+    setDate(getLocalDateString());
+    setDescription("Labour");
+    setCustomDescription("");
+    setAmount("");
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEntryId) return;
+    
+    const finalDescription = description === "Others" ? customDescription : description;
+
+    const payload = {
+      workId: selectedEntryId,
+      date,
+      description: finalDescription,
+      amount: Number(amount)
+    };
+
+    if (editingId) {
+      await onUpdateExpense(editingId, payload);
+    } else {
+      await onCreateExpense(payload);
+    }
+    clearForm();
+    setEditingId(null);
+    setShowForm(false);
+    onRefresh();
+  };
+
+  const handleEdit = (exp: Expense) => {
+    setEditingId(exp.id);
+    setDate(formatDate(exp.date));
+    if (descriptionOptions.includes(exp.description)) {
+      setDescription(exp.description);
+      setCustomDescription("");
+    } else {
+      setDescription("Others");
+      setCustomDescription(exp.description);
+    }
+    setAmount(exp.amount);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Delete this expense record?")) {
+      await onDeleteExpense(id);
+      onRefresh();
+    }
+  };
+
+  const filteredExpenses = expenses.filter(exp => exp.workId === selectedEntryId);
+  const totalExpenseValuation = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+  const filteredWorkOptions = [
+    ...entries.map(e => ({ id: e.id, name: e.workName, type: 'entry' as const })),
+    ...(privateWorks || []).map(p => ({ id: p.id, name: p.workName, type: 'private' as const }))
+  ].filter(opt => opt.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const formatDate = (date: string | Date) => {
+  if (!date) return "";
+  const dateStr = typeof date === "string" ? date : date.toISOString();
+  const parts = dateStr.substring(0, 10).split("-");
+  if (parts.length !== 3) return dateStr;
+  const year = parts[0].substring(2);
+  const month = parts[1];
+  const day = parts[2];
+  return `${day}/${month}/${year}`;
+};
+
+;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold tracking-tight">Expense Updation</h2>
+        <p className="text-xs text-neutral-500 font-medium">Log and track daily operational expenses associated with ongoing projects.</p>
+      </div>
+
+      {/* Search Input */}
+      <div className="relative w-64 mb-4">
+        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-neutral-400" />
+        <input 
+          type="text" placeholder="Search work name..." value={searchQuery} onChange={(e) => handleWorkSearch(e.target.value)}
+          className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
+        />
+      </div>
+
+      <div className="border border-neutral-200 bg-white p-4 rounded space-y-4">
+        <div>
+          <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Select Work Name</label>
+          <select 
+            value={selectedEntryId} onChange={(e) => setSelectedEntryId(e.target.value)}
+            className="w-full md:w-1/2 px-3 py-2 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold text-black bg-white"
+          >
+            <option value="">-- Select Active Work --</option>
+            {filteredWorkOptions.map(opt => (
+              <option key={opt.id} value={opt.id}>
+                {opt.name}{opt.type === 'private' ? " (Private)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {selectedEntryId && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex justify-between items-center bg-neutral-50 p-4 border border-neutral-200 rounded">
+            <div>
+              <span className="text-[9px] uppercase font-bold text-neutral-400">Total Expenses Logged</span>
+              <div className="text-lg font-mono font-bold text-black font-semibold">₹{totalExpenseValuation.toLocaleString()}</div>
+            </div>
+            {!showForm && (
+              <button 
+                onClick={() => { clearForm(); setEditingId(null); setShowForm(true); }}
+                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-900 text-xs font-semibold rounded uppercase tracking-wider flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Expense Row
+              </button>
+            )}
+          </div>
+
+          {showForm && (
+            <form onSubmit={handleSave} className="border border-black bg-white p-4 rounded space-y-4">
+              <h4 className="text-xs font-bold uppercase border-b border-neutral-100 pb-2">
+                {editingId ? "Update Expense Item" : "New Expense Details"}
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Date</label>
+                  <input 
+                    type="date" 
+                    required 
+                    value={date} 
+                    onChange={(e) => setDate(e.target.value)} 
+                    className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs text-black bg-white focus:outline-none focus:border-black" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Description</label>
+                  <select 
+                    required 
+                    value={description} 
+                    onChange={(e) => setDescription(e.target.value)} 
+                    className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs text-black bg-white focus:outline-none focus:border-black font-semibold"
+                  >
+                    {descriptionOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  {description === "Others" && (
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="Specify other description" 
+                      value={customDescription} 
+                      onChange={(e) => setCustomDescription(e.target.value)} 
+                      className="w-full mt-2 px-3 py-1.5 border border-neutral-200 rounded text-xs text-black bg-white focus:outline-none focus:border-black font-semibold" 
+                    />
+                  )}
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Amount (₹)</label>
+                  <input 
+                    type="number" 
+                    required 
+                    min="1"
+                    placeholder="e.g. 5000" 
+                    value={amount} 
+                    onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))} 
+                    className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono text-black bg-white focus:outline-none focus:border-black font-semibold" 
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-neutral-50 pt-3">
+                <button type="button" onClick={clearForm} className="px-3 py-1 border border-neutral-200 text-xs rounded font-semibold text-neutral-700 bg-white hover:bg-neutral-50">Clear</button>
+                <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="px-3 py-1 border border-neutral-200 text-xs rounded font-semibold text-neutral-700 bg-white hover:bg-neutral-50">Cancel</button>
+                <button type="submit" className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-neutral-900 font-semibold">{editingId ? "Update" : "Save"}</button>
+              </div>
+            </form>
+          )}
+
+          {/* Table */}
+          <div className="border border-neutral-200 bg-white rounded overflow-hidden">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] text-neutral-400">
+                  <th className="p-3">Date</th>
+                  <th className="p-3">Description</th>
+                  <th className="p-3 text-right">Amount</th>
+                  <th className="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {filteredExpenses.map(exp => (
+                  <tr key={exp.id} className="hover:bg-neutral-50/50">
+                    <td className="p-3 font-mono font-medium text-black">
+                      {formatDate(exp.date)}
+                    </td>
+                    <td className="p-3 font-semibold text-neutral-800">{exp.description}</td>
+                    <td className="p-3 text-right font-mono font-bold text-black border-l border-neutral-50">
+                      ₹{exp.amount.toLocaleString()}
+                    </td>
+                    <td className="p-3 text-right">
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={() => handleEdit(exp)} className="p-1 hover:bg-neutral-100 rounded text-neutral-600">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleDelete(exp.id)} className="p-1 hover:bg-neutral-150 rounded text-neutral-600">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredExpenses.length > 0 && (
+                  <tr className="bg-neutral-50 font-bold border-t-2 border-neutral-200">
+                    <td className="p-3"></td>
+                    <td className="p-3 text-left">TOTAL EXPENSE</td>
+                    <td className="p-3 text-right font-mono text-black border-l border-neutral-200 font-semibold">
+                      ₹{totalExpenseValuation.toLocaleString()}
+                    </td>
+                    <td className="p-3"></td>
+                  </tr>
+                )}
+                {filteredExpenses.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-6 text-center text-neutral-400">No expenses logged for this work entry.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// MODULE 12 – PROFIT CALCULATION
+// ==========================================
+export function ProfitCalculationView({
+  entries,
+  privateWorks = [],
+  cementLoads = [],
+  tarLoads = [],
+  expenses = [],
+  onNavigate
+}: {
+  entries: Entry[];
+  privateWorks?: PrivateWork[];
+  cementLoads: CementLoad[];
+  tarLoads: TarLoad[];
+  expenses: Expense[];
+  onNavigate: (tab: string) => void;
+}) {
+  const [selectedEntryId, setSelectedEntryId] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Combine works for dropdown selection
+  const allWorks = [
+    ...entries.map(e => ({ id: e.id, name: e.workName, type: 'entry' as const, original: e })),
+    ...(privateWorks || []).map(p => ({ id: p.id, name: p.workName, type: 'private' as const, original: p }))
+  ];
+
+  // Search filter
+  const filteredWorks = allWorks.filter(w => 
+    w.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const selectedWork = allWorks.find(w => w.id === selectedEntryId);
+
+  // Calculations
+  let agreedAmount = 0;
+  let gstApplicable = true;
+  let gstAmount = 0;
+  let agreedAmountWithGST = 0;
+  let materialsCost = 0;
+  let executionExpense = 0;
+  let totalExpense = 0;
+  let totalExpenseWithGST = 0;
+  let overallProfit = 0;
+  let profitPercentage = 0;
+
+  if (selectedWork) {
+    agreedAmount = selectedWork.type === 'entry' 
+      ? selectedWork.original.amount 
+      : selectedWork.original.approxFinalWorkAmount;
+    gstApplicable = selectedWork.original.gstApplicable;
+    
+    // Calculate materials cost from Cement Loads & Tar Loads
+    const cementCost = cementLoads
+      .filter(cl => cl.workId === selectedWork.id)
+      .reduce((sum, cl) => sum + cl.amountPerLoad, 0);
+
+    const tarCost = tarLoads
+      .filter(tl => tl.workId === selectedWork.id)
+      .reduce((sum, tl) => sum + tl.amountPerLoad, 0);
+
+    materialsCost = cementCost + tarCost;
+
+    // Calculate execution expenses
+    executionExpense = expenses
+      .filter(exp => exp.workId === selectedWork.id)
+      .reduce((sum, exp) => sum + exp.amount, 0);
+
+    // Formulas
+    const gstPercentage = gstApplicable ? 18 : 0;
+    gstAmount = agreedAmount * (gstPercentage / 100);
+    agreedAmountWithGST = agreedAmount + gstAmount;
+
+    totalExpense = materialsCost + executionExpense;
+    totalExpenseWithGST = totalExpense + (totalExpense * 0.18);
+
+    overallProfit = agreedAmountWithGST - totalExpenseWithGST;
+    profitPercentage = agreedAmountWithGST > 0 ? (overallProfit / agreedAmountWithGST) * 100 : 0;
+  }
+
+  const handleExcelExport = () => {
+    if (!selectedWork) return;
+    const reportData = [
+      { Parameter: "Work Name", Value: selectedWork.name },
+      { Parameter: "Agreed Amount", Value: `₹${agreedAmount.toLocaleString()}` },
+      { Parameter: "GST (18%)", Value: `₹${gstAmount.toLocaleString()}` },
+      { Parameter: "Agreed Amount with GST", Value: `₹${agreedAmountWithGST.toLocaleString()}` },
+      { Parameter: "Materials Cost", Value: `₹${materialsCost.toLocaleString()}` },
+      { Parameter: "Expense During Execution", Value: `₹${executionExpense.toLocaleString()}` },
+      { Parameter: "Total Expense", Value: `₹${totalExpense.toLocaleString()}` },
+      { Parameter: "Total Expense Including GST", Value: `₹${totalExpenseWithGST.toLocaleString()}` },
+      { Parameter: "Profit Percentage", Value: `${Math.round(profitPercentage * 100) / 100}%` },
+      { Parameter: "OVERALL PROFIT", Value: `₹${overallProfit.toLocaleString()}` }
+    ];
+    
+    // Create Excel-compatible CSV output
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "BuildCorp ERP - Profit Calculation Report\n"
+      + `Generated: ${new Date().toLocaleDateString()}\n\n`
+      + "Parameter,Value\n"
+      + reportData.map(r => `"${r.Parameter}","${r.Value}"`).join("\n");
+      
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `profit_calculation_${selectedWork.id}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div className="space-y-6 max-w-xl mx-auto animate-fade-in text-black print:p-0">
+      <div className="print:hidden">
+        <h2 className="text-xl font-bold tracking-tight uppercase">Profit Calculation</h2>
+        <p className="text-xs text-neutral-500 font-medium">Auto-calculated project profitability register synced with Materials & Expenses.</p>
+      </div>
+
+      {/* Select Work */}
+      <div className="border border-neutral-200 bg-white p-5 rounded space-y-4 print:hidden">
+        <div>
+          <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1.5">Search & Select Work</label>
+          <div className="relative mb-2">
+            <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-neutral-400" />
+            <input 
+              type="text" 
+              placeholder="Search work by name..." 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
+            />
+          </div>
+          <select 
+            value={selectedEntryId} 
+            onChange={(e) => setSelectedEntryId(e.target.value)}
+            className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-semibold text-black bg-white"
+          >
+            <option value="">-- [ Search Work ▼ ] --</option>
+            {filteredWorks.map(w => (
+              <option key={w.id} value={w.id}>
+                {w.name}{w.type === 'private' ? " (Private)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Profit Calculation Screen Sheet */}
+      {selectedWork ? (
+        <div className="border border-black bg-white rounded p-6 shadow-xs space-y-6 print:border-none print:p-0">
+          <div className="text-center border-b border-black pb-4">
+            <h3 className="text-md font-bold uppercase tracking-widest font-mono">ARAVIND ASSOCIATES</h3>
+            <p className="text-[9px] uppercase tracking-wider text-neutral-500 font-mono mt-0.5">Project Financial Statement</p>
+          </div>
+
+          <div className="space-y-4 text-xs font-mono">
+            {/* Work Name */}
+            <div className="flex justify-between border-b border-neutral-100 pb-1.5">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Work Name</span>
+              <span className="font-semibold text-black text-right max-w-xs">{selectedWork.name}</span>
+            </div>
+
+            {/* Agreed Amount */}
+            <div className="flex justify-between border-b border-neutral-100 pb-1.5">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Agreed Amount</span>
+              <span className="font-bold text-black">₹{agreedAmount.toLocaleString()}</span>
+            </div>
+
+            {/* GST (18%) */}
+            <div className="flex justify-between border-b border-neutral-100 pb-1.5">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">GST (18%)</span>
+              <span className="font-bold text-neutral-600">₹{gstAmount.toLocaleString()}</span>
+            </div>
+
+            {/* Agreed Amount with GST */}
+            <div className="flex justify-between border-b border-neutral-200 pb-2">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Agreed Amount with GST</span>
+              <span className="font-bold text-black text-sm">₹{agreedAmountWithGST.toLocaleString()}</span>
+            </div>
+
+            {/* Materials Cost */}
+            <div className="flex justify-between border-b border-neutral-100 pb-1.5 pt-2">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Materials Cost</span>
+              <span className="font-bold text-neutral-600">₹{materialsCost.toLocaleString()}</span>
+            </div>
+
+            {/* Expense During Execution */}
+            <div className="flex justify-between border-b border-neutral-100 pb-1.5">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Expense During Execution</span>
+              <span className="font-bold text-neutral-600">₹{executionExpense.toLocaleString()}</span>
+            </div>
+
+            {/* Total Expense */}
+            <div className="flex justify-between border-b border-neutral-100 pb-1.5 pt-2">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Total Expense</span>
+              <span className="font-bold text-black">₹{totalExpense.toLocaleString()}</span>
+            </div>
+
+            {/* Total Expense Including GST */}
+            <div className="flex justify-between border-b border-neutral-200 pb-2">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Total Expense Including GST</span>
+              <span className="font-bold text-black">₹{totalExpenseWithGST.toLocaleString()}</span>
+            </div>
+
+            {/* Profit Percentage */}
+            <div className="flex justify-between border-b border-neutral-100 pb-1.5 pt-2">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Profit Percentage</span>
+              <span className={`font-bold ${profitPercentage >= 0 ? 'text-black' : 'text-red-600'}`}>
+                {Math.round(profitPercentage * 100) / 100}%
+              </span>
+            </div>
+
+            {/* OVERALL PROFIT */}
+            <div className="flex justify-between border border-black p-4 bg-neutral-50 rounded">
+              <span className="text-black uppercase font-bold text-[10px] self-center">OVERALL PROFIT</span>
+              <span className={`font-mono text-lg font-bold ${overallProfit >= 0 ? 'text-black font-extrabold' : 'text-red-600'}`}>
+                ₹{overallProfit.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-between gap-3 pt-4 border-t border-neutral-100 print:hidden">
+            <button 
+              type="button" 
+              onClick={() => onNavigate("dashboard")}
+              className="px-4 py-1.5 border border-neutral-200 text-xs rounded font-semibold text-neutral-700 bg-white hover:bg-neutral-50 cursor-pointer"
+            >
+              Back
+            </button>
+            <div className="flex gap-2">
+              <button 
+                type="button" 
+                onClick={handleExcelExport}
+                className="px-4 py-1.5 border border-neutral-300 text-xs rounded font-semibold text-neutral-700 bg-white hover:bg-neutral-50 cursor-pointer"
+              >
+                Excel
+              </button>
+              <button 
+                type="button" 
+                onClick={() => window.print()}
+                className="px-4 py-1.5 bg-black hover:bg-neutral-900 text-white text-xs rounded font-semibold cursor-pointer"
+              >
+                Print
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="border border-neutral-200 bg-white p-8 rounded text-center text-neutral-400 font-semibold text-xs">
+          Please select a contract or private work from the dropdown to calculate profitability.
+        </div>
+      )}
+    </div>
+  );
+}
+
+
