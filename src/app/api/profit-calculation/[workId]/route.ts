@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { dbService } from '@/lib/db-service';
+import { verifyAccessToken } from '@/lib/auth/jwt';
 
 export async function GET(
   request: Request,
@@ -8,9 +10,20 @@ export async function GET(
   try {
     const { workId } = await context.params;
 
+    const cookieStore = await cookies();
+    const token = cookieStore.get('auth_token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    const payload = verifyAccessToken(token) as any;
+    if (!payload?.email) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+    const ownerEmail = payload.email as string;
+
     // Fetch entries and private works
-    const entries = (await dbService.getEntries()) as any[];
-    const privateWorks = await dbService.getPrivateWorks();
+    const entries = (await dbService.getEntries(ownerEmail)) as any[];
+    const privateWorks = await dbService.getPrivateWorks(ownerEmail);
 
     // Find the work (either government contract entry or private work)
     let workName = '';
@@ -34,8 +47,8 @@ export async function GET(
     }
 
     // Fetch materials costs
-    const cementLoads = await dbService.getCementLoads();
-    const tarLoads = await dbService.getTarLoads();
+    const cementLoads = await dbService.getCementLoads(ownerEmail);
+    const tarLoads = await dbService.getTarLoads(ownerEmail);
 
     const cementCost = cementLoads
       .filter((cl: any) => cl.workId === workId)
@@ -48,7 +61,7 @@ export async function GET(
     const materialsCost = cementCost + tarCost;
 
     // Fetch execution expenses
-    const expenses = await dbService.getExpenses();
+    const expenses = await dbService.getExpenses(ownerEmail);
     const executionExpense = expenses
       .filter((exp: any) => exp.workId === workId)
       .reduce((sum: number, exp: any) => sum + exp.amount, 0);
