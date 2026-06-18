@@ -20,14 +20,26 @@ interface LogEntry {
 }
 
 const logsDir = path.resolve(process.cwd(), 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+try {
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn('⚠️ File logging disabled (read-only filesystem):', (err as Error).message);
 }
 
 function writeLog(entry: LogEntry) {
-  const logPath = path.join(logsDir, 'auth.log');
-  const line = JSON.stringify(entry) + '\n';
-  fs.appendFileSync(logPath, line, { encoding: 'utf8' });
+  // Always output to standard console in all environments
+  const consoleMethod = entry.level === LogLevel.ERROR ? 'error' : entry.level === LogLevel.WARN ? 'warn' : 'log';
+  console[consoleMethod](`[${entry.level.toUpperCase()}] ${entry.message}`, entry.meta ? JSON.stringify(entry.meta) : '');
+
+  try {
+    const logPath = path.join(logsDir, 'auth.log');
+    const line = JSON.stringify(entry) + '\n';
+    fs.appendFileSync(logPath, line, { encoding: 'utf8' });
+  } catch (err) {
+    // Silently ignore write failures (e.g. read-only filesystem on Netlify/Lambda)
+  }
 }
 
 export function logInfo(message: string, meta?: Record<string, unknown>) {
