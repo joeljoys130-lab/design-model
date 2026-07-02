@@ -160,9 +160,7 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="hidden sm:flex items-center gap-2 border border-neutral-200 px-3 py-1 rounded text-xs font-bold bg-neutral-50 uppercase">
-              <span className="w-2.5 h-2.5 bg-black rounded-full" />
-            </div>
+
           </div>
 
           <div className="flex items-center gap-4">
