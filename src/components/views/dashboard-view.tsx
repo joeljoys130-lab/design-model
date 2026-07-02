@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { 
   Building2, Layers, Package, Fuel, TrendingUp, Calendar, ArrowRight, 
-  Award, FileText, CheckSquare, PlusCircle, BookOpen, Warehouse, Compass
+  Award, FileText, CheckSquare, PlusCircle, BookOpen, Warehouse, Compass, X
 } from "lucide-react";
 import { CementLoad, Entry, StockRegisterItem, PrivateWork, TarLoad, WorkBasedEntry, Expense } from "@/lib/types";
 
@@ -29,6 +30,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
     privateWorks = [],
     expenses = []
   } = data;
+
+  const [selectedKpi, setSelectedKpi] = useState<string | null>(null);
 
   const totalCementBags = cementLoads.reduce((sum, item) => sum + item.loadInBags, 0);
   const totalTarKg = tarLoads.reduce((sum, item) => sum + item.quantityInKg, 0);
@@ -103,6 +106,14 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
     return new Intl.NumberFormat('en-IN').format(num);
   };
 
+  const getWorkName = (workId: string) => {
+    const entry = entries.find(e => e.id === workId);
+    if (entry) return `${entry.workName} (Govt)`;
+    const pw = privateWorks.find(p => p.id === workId);
+    if (pw) return `${pw.workName} (Private)`;
+    return "General / Unlinked";
+  };
+
   return (
     <div className="space-y-8 animate-fade-in text-black">
       {/* Page Header */}
@@ -114,7 +125,11 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
-          <div key={i} className="border border-neutral-200 bg-white p-5 rounded">
+          <div 
+            key={i} 
+            onClick={() => setSelectedKpi(stat.label)}
+            className="border border-neutral-200 bg-white p-5 rounded cursor-pointer hover:border-black transition-colors"
+          >
             <div className="text-[9px] uppercase font-bold text-neutral-400 tracking-wider">{stat.label}</div>
             <div className="text-2xl font-mono font-bold mt-1.5">{stat.value}</div>
             <div className="text-[10px] text-neutral-500 mt-1">{stat.desc}</div>
@@ -128,7 +143,10 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
           Portfolio Profitability & Financial Health
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between">
+          <div 
+            onClick={() => setSelectedKpi("Total Portfolio Valuation")}
+            className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between cursor-pointer hover:border-black transition-colors"
+          >
             <div>
               <div className="text-[9px] uppercase font-bold text-neutral-400 tracking-wider">Total Portfolio Valuation</div>
               <div className="text-xl font-mono font-bold mt-1.5 text-black">₹{formatNumber(portfolioValuation)}</div>
@@ -138,7 +156,10 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
               <span>Private: ₹{formatNumber(privateWorksValuation)}</span>
             </div>
           </div>
-          <div className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between">
+          <div 
+            onClick={() => setSelectedKpi("Total Operational Cost / Expenses")}
+            className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between cursor-pointer hover:border-black transition-colors"
+          >
             <div>
               <div className="text-[9px] uppercase font-bold text-neutral-400 tracking-wider">Total Operational Cost / Expenses</div>
               <div className="text-xl font-mono font-bold mt-1.5 text-neutral-600">₹{formatNumber(totalExpenses)}</div>
@@ -147,7 +168,10 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
               All logged machine rents, labor wages, fuel, and site fees.
             </div>
           </div>
-          <div className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between">
+          <div 
+            onClick={() => setSelectedKpi("Projected Portfolio Profit")}
+            className="border border-neutral-200 bg-white p-5 rounded flex flex-col justify-between cursor-pointer hover:border-black transition-colors"
+          >
             <div>
               <div className="text-[9px] uppercase font-bold text-neutral-400 tracking-wider">Projected Portfolio Profit</div>
               <div className={`text-xl font-mono font-bold mt-1.5 ${projectedProfit >= 0 ? 'text-black font-extrabold' : 'text-red-600'}`}>
@@ -196,6 +220,403 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
           })}
         </div>
       </div>
+
+      {/* KPI details Modal overlay */}
+      {selectedKpi && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white border border-neutral-200 rounded max-w-4xl w-full max-h-[85vh] flex flex-col shadow-xl text-black">
+            
+            {/* Modal Header */}
+            <div className="p-5 border-b border-neutral-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold uppercase tracking-tight">{selectedKpi} Details</h3>
+                <p className="text-xs text-neutral-400">Detailed list and registry data overview</p>
+              </div>
+              <button 
+                onClick={() => setSelectedKpi(null)}
+                className="p-1.5 hover:bg-neutral-100 border border-neutral-200 rounded transition-colors text-black cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
+              
+              {/* ACTIVE WORKS / TOTAL WORKS */}
+              {(selectedKpi === "Active Works" || selectedKpi === "Total Works") && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Govt Contracts (Ongoing)</h4>
+                    {entries.filter(e => e.status !== "Completed").length === 0 ? (
+                      <p className="text-neutral-500 italic">No ongoing contracts found.</p>
+                    ) : (
+                      <div className="border border-neutral-200 rounded overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                              <th className="p-3">Work Name</th>
+                              <th className="p-3">Office</th>
+                              <th className="p-3 text-right">Amount</th>
+                              <th className="p-3">Completion Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-neutral-200 font-mono">
+                            {entries.filter(e => e.status !== "Completed").map(e => (
+                              <tr key={e.id} className="hover:bg-neutral-50/50">
+                                <td className="p-3 font-bold font-sans">{e.workName}</td>
+                                <td className="p-3">{e.nameOfOffice}</td>
+                                <td className="p-3 text-right font-semibold">₹{formatNumber(e.amount)}</td>
+                                <td className="p-3">{new Date(e.workCompletionDateAsPerAgreement).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Private Works</h4>
+                    {privateWorks.length === 0 ? (
+                      <p className="text-neutral-500 italic">No private works found.</p>
+                    ) : (
+                      <div className="border border-neutral-200 rounded overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                              <th className="p-3">Work Name</th>
+                              <th className="p-3">Location</th>
+                              <th className="p-3 text-right">Approx Amount</th>
+                              <th className="p-3">Completion Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-neutral-200 font-mono">
+                            {privateWorks.map(pw => (
+                              <tr key={pw.id} className="hover:bg-neutral-50/50">
+                                <td className="p-3 font-bold font-sans">{pw.workName}</td>
+                                <td className="p-3">{pw.location}</td>
+                                <td className="p-3 text-right font-semibold">₹{formatNumber(pw.approxFinalWorkAmount)}</td>
+                                <td className="p-3">{new Date(pw.completedDate).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* CONTRACT VALUE */}
+              {selectedKpi === "Contract Value" && (
+                <div>
+                  <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Agreement Values (All Govt Contracts)</h4>
+                  {entries.length === 0 ? (
+                    <p className="text-neutral-500 italic">No government contracts registered.</p>
+                  ) : (
+                    <div className="border border-neutral-200 rounded overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                            <th className="p-3">Work Name</th>
+                            <th className="p-3">Office Name</th>
+                            <th className="p-3">Status</th>
+                            <th className="p-3 text-right">Agreement Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200 font-mono">
+                          {entries.map(e => (
+                            <tr key={e.id} className="hover:bg-neutral-50/50">
+                              <td className="p-3 font-bold font-sans">{e.workName}</td>
+                              <td className="p-3">{e.nameOfOffice}</td>
+                              <td className="p-3">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-sans font-bold ${e.status === 'Completed' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'}`}>
+                                  {e.status}
+                                </span>
+                              </td>
+                              <td className="p-3 text-right font-semibold">₹{formatNumber(e.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* CEMENT STOCKED */}
+              {selectedKpi === "Cement Stocked" && (
+                <div>
+                  <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Cement Purchases / Loads</h4>
+                  {cementLoads.length === 0 ? (
+                    <p className="text-neutral-500 italic">No cement loads logged.</p>
+                  ) : (
+                    <div className="border border-neutral-200 rounded overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                            <th className="p-3">Date</th>
+                            <th className="p-3">Invoice No</th>
+                            <th className="p-3">Company / Brand</th>
+                            <th className="p-3">Bags / Tonnes</th>
+                            <th className="p-3 text-right">Amount</th>
+                            <th className="p-3 text-right">Paid</th>
+                            <th className="p-3 text-right">Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200 font-mono">
+                          {cementLoads.map(cl => (
+                            <tr key={cl.id} className="hover:bg-neutral-50/50">
+                              <td className="p-3">{new Date(cl.purchaseDate).toLocaleDateString()}</td>
+                              <td className="p-3">{cl.invoiceNumber}</td>
+                              <td className="p-3 font-sans font-bold">{cl.cementCompany} <span className="text-[10px] text-neutral-400 font-normal">({cl.purchasedFrom})</span></td>
+                              <td className="p-3">{cl.loadInBags} Bags / {cl.loadInTonne} T</td>
+                              <td className="p-3 text-right">₹{formatNumber(cl.amountPerLoad)}</td>
+                              <td className="p-3 text-right text-neutral-600">₹{formatNumber(cl.paidAmount)}</td>
+                              <td className="p-3 text-right text-red-600 font-semibold">₹{formatNumber(cl.balanceAmount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAR AGGREGATE */}
+              {selectedKpi === "Tar Aggregate" && (
+                <div>
+                  <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Tar Emulsion / Bitumen Loads</h4>
+                  {tarLoads.length === 0 ? (
+                    <p className="text-neutral-500 italic">No tar loads logged.</p>
+                  ) : (
+                    <div className="border border-neutral-200 rounded overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                            <th className="p-3">Date</th>
+                            <th className="p-3">Item Type</th>
+                            <th className="p-3">Quantity</th>
+                            <th className="p-3">Office target</th>
+                            <th className="p-3 text-right">Amount</th>
+                            <th className="p-3 text-right">Paid</th>
+                            <th className="p-3 text-right">Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200 font-mono">
+                          {tarLoads.map(tl => (
+                            <tr key={tl.id} className="hover:bg-neutral-50/50">
+                              <td className="p-3">{new Date(tl.purchasedDate).toLocaleDateString()}</td>
+                              <td className="p-3 font-sans font-bold">{tl.item} <span className="text-[10px] text-neutral-400 font-normal">({tl.purchasedFrom})</span></td>
+                              <td className="p-3">{formatNumber(tl.quantityInKg)} Kg ({tl.loadInNoOfPack} Packs)</td>
+                              <td className="p-3 font-sans">{tl.addressedOffice}</td>
+                              <td className="p-3 text-right">₹{formatNumber(tl.amountPerLoad)}</td>
+                              <td className="p-3 text-right text-neutral-600">₹{formatNumber(tl.paidAmount)}</td>
+                              <td className="p-3 text-right text-red-600 font-semibold">₹{formatNumber(tl.balanceToBePaid)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* WORKS COMPLETED */}
+              {selectedKpi === "Works Completed" && (
+                <div>
+                  <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Completed Works Registry</h4>
+                  {entries.filter(e => e.status === "Completed").length === 0 ? (
+                    <p className="text-neutral-500 italic">No completed works found.</p>
+                  ) : (
+                    <div className="border border-neutral-200 rounded overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                            <th className="p-3">Work Name</th>
+                            <th className="p-3">Office Name</th>
+                            <th className="p-3 text-right">Final Amount</th>
+                            <th className="p-3">Timeline Completion</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200 font-mono">
+                          {entries.filter(e => e.status === "Completed").map(e => (
+                            <tr key={e.id} className="hover:bg-neutral-50/50">
+                              <td className="p-3 font-bold font-sans">{e.workName}</td>
+                              <td className="p-3">{e.nameOfOffice}</td>
+                              <td className="p-3 text-right font-semibold">₹{formatNumber(e.amount)}</td>
+                              <td className="p-3">{new Date(e.workCompletionDateAsPerAgreement).toLocaleDateString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TOTAL PORTFOLIO VALUATION */}
+              {selectedKpi === "Total Portfolio Valuation" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4 bg-neutral-50 p-4 border border-neutral-200 rounded">
+                    <div>
+                      <div className="text-[9px] uppercase font-bold text-neutral-400">Total Govt Valuation</div>
+                      <div className="text-xl font-bold font-mono">₹{formatNumber(totalContractValuation)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] uppercase font-bold text-neutral-400">Total Private Valuation</div>
+                      <div className="text-xl font-bold font-mono">₹{formatNumber(privateWorksValuation)}</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">All Valuation Items</h4>
+                    <div className="border border-neutral-200 rounded overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                            <th className="p-3">Project / Work Name</th>
+                            <th className="p-3">Type</th>
+                            <th className="p-3 text-right">Valuation Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200 font-mono">
+                          {entries.map(e => (
+                            <tr key={e.id} className="hover:bg-neutral-50/50">
+                              <td className="p-3 font-bold font-sans">{e.workName}</td>
+                              <td className="p-3 font-sans">Govt Contract</td>
+                              <td className="p-3 text-right font-semibold">₹{formatNumber(e.amount)}</td>
+                            </tr>
+                          ))}
+                          {privateWorks.map(pw => (
+                            <tr key={pw.id} className="hover:bg-neutral-50/50">
+                              <td className="p-3 font-bold font-sans">{pw.workName}</td>
+                              <td className="p-3 font-sans">Private Work</td>
+                              <td className="p-3 text-right font-semibold">₹{formatNumber(pw.approxFinalWorkAmount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TOTAL OPERATIONAL COST / EXPENSES */}
+              {selectedKpi === "Total Operational Cost / Expenses" && (
+                <div>
+                  <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Logged Expenses Registry</h4>
+                  {expenses.length === 0 ? (
+                    <p className="text-neutral-500 italic">No expenses recorded.</p>
+                  ) : (
+                    <div className="border border-neutral-200 rounded overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                            <th className="p-3">Date</th>
+                            <th className="p-3">Description</th>
+                            <th className="p-3">Associated Work</th>
+                            <th className="p-3 text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200 font-mono">
+                          {expenses.map(exp => (
+                            <tr key={exp.id} className="hover:bg-neutral-50/50">
+                              <td className="p-3">{new Date(exp.date).toLocaleDateString()}</td>
+                              <td className="p-3 font-sans">{exp.description}</td>
+                              <td className="p-3 font-sans font-bold">{getWorkName(exp.workId)}</td>
+                              <td className="p-3 text-right font-semibold text-red-600">₹{formatNumber(exp.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PROJECTED PORTFOLIO PROFIT */}
+              {selectedKpi === "Projected Portfolio Profit" && (
+                <div className="space-y-6">
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="border border-neutral-200 p-4 rounded bg-neutral-50">
+                      <div className="text-[9px] font-bold uppercase text-neutral-400">Total Portfolio Value</div>
+                      <div className="text-lg font-bold font-mono mt-1">₹{formatNumber(portfolioValuation)}</div>
+                    </div>
+                    <div className="border border-neutral-200 p-4 rounded bg-neutral-50">
+                      <div className="text-[9px] font-bold uppercase text-neutral-400">Total Expenses</div>
+                      <div className="text-lg font-bold font-mono text-neutral-600 mt-1">₹{formatNumber(totalExpenses)}</div>
+                    </div>
+                    <div className="border border-neutral-200 p-4 rounded bg-neutral-50">
+                      <div className="text-[9px] font-bold uppercase text-neutral-400">Projected Profit</div>
+                      <div className="text-lg font-bold font-mono text-black mt-1">₹{formatNumber(projectedProfit)}</div>
+                    </div>
+                    <div className="border border-neutral-200 p-4 rounded bg-neutral-50">
+                      <div className="text-[9px] font-bold uppercase text-neutral-400">Realized Cash Profit</div>
+                      <div className="text-lg font-bold font-mono text-black mt-1">₹{formatNumber(realizedProfit)}</div>
+                    </div>
+                  </div>
+
+                  {/* Profitability breakdown per work */}
+                  <div>
+                    <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Profitability Breakdown by Project</h4>
+                    <div className="border border-neutral-200 rounded overflow-hidden">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                            <th className="p-3">Work Name</th>
+                            <th className="p-3">Type</th>
+                            <th className="p-3 text-right">Value</th>
+                            <th className="p-3 text-right">Expenses</th>
+                            <th className="p-3 text-right">Projected Profit</th>
+                            <th className="p-3 text-right">Profit Margin</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-200 font-mono">
+                          {entries.map(e => {
+                            const projectExpenses = expenses.filter(exp => exp.workId === e.id).reduce((sum, exp) => sum + exp.amount, 0);
+                            const projProfit = e.amount - projectExpenses;
+                            const margin = e.amount > 0 ? ((projProfit / e.amount) * 100).toFixed(1) : "0.0";
+                            return (
+                              <tr key={e.id} className="hover:bg-neutral-50/50">
+                                <td className="p-3 font-bold font-sans">{e.workName}</td>
+                                <td className="p-3 font-sans">Govt Contract</td>
+                                <td className="p-3 text-right font-semibold">₹{formatNumber(e.amount)}</td>
+                                <td className="p-3 text-right text-neutral-600">₹{formatNumber(projectExpenses)}</td>
+                                <td className="p-3 text-right font-extrabold text-black">₹{formatNumber(projProfit)}</td>
+                                <td className="p-3 text-right font-sans font-bold">{margin}%</td>
+                              </tr>
+                            );
+                          })}
+                          {privateWorks.map(pw => {
+                            const projectExpenses = expenses.filter(exp => exp.workId === pw.id).reduce((sum, exp) => sum + exp.amount, 0);
+                            const projProfit = pw.approxFinalWorkAmount - projectExpenses;
+                            const margin = pw.approxFinalWorkAmount > 0 ? ((projProfit / pw.approxFinalWorkAmount) * 100).toFixed(1) : "0.0";
+                            return (
+                              <tr key={pw.id} className="hover:bg-neutral-50/50">
+                                <td className="p-3 font-bold font-sans">{pw.workName}</td>
+                                <td className="p-3 font-sans">Private Work</td>
+                                <td className="p-3 text-right font-semibold">₹{formatNumber(pw.approxFinalWorkAmount)}</td>
+                                <td className="p-3 text-right text-neutral-600">₹{formatNumber(projectExpenses)}</td>
+                                <td className="p-3 text-right font-extrabold text-black">₹{formatNumber(projProfit)}</td>
+                                <td className="p-3 text-right font-sans font-bold">{margin}%</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

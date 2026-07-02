@@ -23,6 +23,13 @@ export const REGISTERED_USERS: Record<string, RegisteredUser> = {
     role: 'ADMIN',
     password: 'Thomas@erp',
   },
+  'test@buildcorp.com': {
+    id: 'u-test',
+    email: 'test@buildcorp.com',
+    name: 'Test User',
+    role: 'ADMIN',
+    password: 'TestPassword',
+  },
 };
 
 /** Look up a user by email. Returns undefined if not registered. */

@@ -112,6 +112,7 @@ export interface SiteMaterial {
   type: 'to_deliver' | 'delivered';
   itemSlNo: string;
   specName: string;
+  unit?: string;
   estimatedQuantity: number;
   deliveredQuantityInCft: number;
   balanceQuantityInCft: number;

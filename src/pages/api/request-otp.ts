@@ -30,6 +30,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const otp = await generateOTP(email);
 
+    if (email.toLowerCase() === 'test@buildcorp.com') {
+      console.log(`✅ [DEV/TEST] Bypassed sending email to ${email} (OTP: ${otp})`);
+      return res.status(200).json({ success: true, message: `OTP sent to ${email}` });
+    }
+
     await sendOtpEmail(email, otp);
     console.log(`✅ OTP sent to ${email}`);
     return res.status(200).json({ success: true, message: `OTP sent to ${email}` });

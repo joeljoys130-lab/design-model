@@ -133,6 +133,7 @@ model SiteMaterial {
   type                   String
   itemSlNo               String
   specName               String
+  unit                   String?
   estimatedQuantity      Float
   deliveredQuantityInCft Float
   balanceQuantityInCft   Float

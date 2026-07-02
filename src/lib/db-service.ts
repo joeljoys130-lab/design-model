@@ -59,6 +59,100 @@ async function writeDb<T>(dbFn: () => Promise<T>): Promise<T> {
 
 class DbService {
 
+  // ── STOCK REGISTER RECALCULATION HELPER ────────────────────────────────────
+
+  async recalculateStockRegister(ownerEmail: string): Promise<void> {
+    const defaults = ['Cement', 'RS1', 'SS1', 'VG30'] as const;
+    
+    // Ensure default stock items exist
+    for (const materialName of defaults) {
+      const exists = await prisma.stockRegisterItem.findFirst({ where: { ownerEmail, materialName } });
+      if (!exists) {
+        await prisma.stockRegisterItem.create({
+          data: { ownerEmail, materialName, inBarrel: 0, inKg: 0, inTonne: 0, usedInTonne: 0, balanceInTonne: 0 },
+        });
+      }
+    }
+
+    // Fetch all active cement loads (all are Cement)
+    const cementLoads = await prisma.cementLoad.findMany({
+      where: {
+        ownerEmail,
+        OR: [
+          { deletedAt: { isSet: false } },
+          { deletedAt: null }
+        ]
+      }
+    });
+
+    // Fetch all active tar loads (RS1, SS1, VG30, etc.)
+    const tarLoads = await prisma.tarLoad.findMany({
+      where: {
+        ownerEmail,
+        OR: [
+          { deletedAt: { isSet: false } },
+          { deletedAt: null }
+        ]
+      }
+    });
+
+    // Fetch all active site materials used
+    const siteMaterials = await prisma.siteMaterial.findMany({
+      where: {
+        ownerEmail,
+        type: 'delivered',
+        OR: [
+          { deletedAt: { isSet: false } },
+          { deletedAt: null }
+        ]
+      }
+    });
+
+    // Calculate for each material
+    for (const materialName of defaults) {
+      let inTonne = 0;
+      let inKg = 0;
+      let inBarrel = 0;
+      let usedInTonne = 0;
+
+      if (materialName === 'Cement') {
+        // Sum from cement loads
+        for (const cl of cementLoads) {
+          inTonne += cl.loadInTonne;
+          inKg += cl.loadInTonne * 1000;
+        }
+      }
+
+      // Sum from tar loads matching this item
+      for (const tl of tarLoads) {
+        const itemLower = tl.item.toLowerCase();
+        const matLower = materialName.toLowerCase();
+        if (itemLower === matLower || (itemLower === 'vg 30' && matLower === 'vg30')) {
+          inTonne += tl.quantityInKg / 1000;
+          inKg += tl.quantityInKg;
+          inBarrel += tl.loadInNoOfPack;
+        }
+      }
+
+      // Sum from site materials used matching this item
+      for (const sm of siteMaterials) {
+        const smLower = sm.specName.toLowerCase();
+        const matLower = materialName.toLowerCase();
+        if (smLower === matLower || (smLower === 'vg 30' && matLower === 'vg30')) {
+          usedInTonne += sm.deliveredQuantityInCft; // maps to usedInTonne in existing code
+        }
+      }
+
+      const balanceInTonne = inTonne - usedInTonne;
+
+      // Update Stock Register Item
+      await prisma.stockRegisterItem.updateMany({
+        where: { ownerEmail, materialName },
+        data: { inBarrel, inKg, inTonne, usedInTonne, balanceInTonne }
+      });
+    }
+  }
+
   // ── MODULE 1 — CEMENT LOADS ───────────────────────────────────────────────
 
   async getCementLoads(ownerEmail: string): Promise<CementLoad[]> {
@@ -83,9 +177,11 @@ class DbService {
   ): Promise<CementLoad> {
     const parsed = parseDates(data, ['purchaseDate', 'currentStockDate', 'paymentBillDate']);
     const balanceAmount = parsed.amountPerLoad - parsed.paidAmount;
-    return writeDb(() => prisma.cementLoad.create({
+    const created = await writeDb(() => prisma.cementLoad.create({
       data: { ...parsed, balanceAmount, ownerEmail } as any,
-    })) as unknown as Promise<CementLoad>;
+    })) as unknown as CementLoad;
+    await this.recalculateStockRegister(ownerEmail);
+    return created;
   }
 
   async updateCementLoad(
@@ -93,7 +189,7 @@ class DbService {
     updates: Partial<CementLoad>,
     ownerEmail: string,
   ): Promise<CementLoad | null> {
-    return writeDb(async () => {
+    const updated = await writeDb(async () => {
       const old = await prisma.cementLoad.findFirst({ where: { id, ownerEmail } });
       if (!old) return null;
       const parsedUpdates = parseDates(updates, ['purchaseDate', 'currentStockDate', 'paymentBillDate']);
@@ -104,17 +200,21 @@ class DbService {
           (parsedUpdates.paidAmount ?? old.paidAmount);
       }
       return prisma.cementLoad.update({ where: { id }, data: payload });
-    }) as unknown as Promise<CementLoad | null>;
+    }) as unknown as CementLoad | null;
+    await this.recalculateStockRegister(ownerEmail);
+    return updated;
   }
 
   async deleteCementLoad(id: string, ownerEmail: string): Promise<boolean> {
-    return writeDb(async () => {
+    const result = await writeDb(async () => {
       await prisma.cementLoad.updateMany({
         where: { id, ownerEmail },
         data: { deletedAt: new Date() },
       });
       return true;
     });
+    await this.recalculateStockRegister(ownerEmail);
+    return result;
   }
 
   // ── MODULE 2 — ENTRIES ────────────────────────────────────────────────────
@@ -173,16 +273,8 @@ class DbService {
   async getStockRegister(ownerEmail: string): Promise<StockRegisterItem[]> {
     return readDb(
       async () => {
-        let items = await prisma.stockRegisterItem.findMany({ where: { ownerEmail } });
-        if (items.length === 0) {
-          const defaults = ['Cement', 'RS1', 'SS1', 'VG30'] as const;
-          for (const materialName of defaults) {
-            await prisma.stockRegisterItem.create({
-              data: { ownerEmail, materialName, inBarrel: 0, inKg: 0, inTonne: 0, usedInTonne: 0, balanceInTonne: 0 },
-            });
-          }
-          items = await prisma.stockRegisterItem.findMany({ where: { ownerEmail } });
-        }
+        await this.recalculateStockRegister(ownerEmail);
+        const items = await prisma.stockRegisterItem.findMany({ where: { ownerEmail } });
         return items as unknown as StockRegisterItem[];
       },
       () => [
@@ -243,28 +335,13 @@ class DbService {
     const balanceQuantityInCft = data.estimatedQuantity - data.deliveredQuantityInCft;
     const totalQuantityInSite  = data.deliveredQuantityInCft;
 
-    return writeDb(async () => {
-      const created = await prisma.siteMaterial.create({
+    const created = await writeDb(async () => {
+      return prisma.siteMaterial.create({
         data: { ...data, balanceQuantityInCft, totalQuantityInSite, ownerEmail } as any,
       });
-      if (data.type === 'delivered' && data.deliveredQuantityInCft > 0) {
-        const stockName = this.mapSpecToStock(data.specName);
-        if (stockName) {
-          const stockItem = await prisma.stockRegisterItem.findFirst({
-            where: { ownerEmail, materialName: stockName },
-          });
-          if (stockItem) {
-            const usedInTonne    = stockItem.usedInTonne + data.deliveredQuantityInCft;
-            const balanceInTonne = stockItem.inTonne - usedInTonne;
-            await prisma.stockRegisterItem.update({
-              where: { id: stockItem.id },
-              data: { usedInTonne, balanceInTonne },
-            });
-          }
-        }
-      }
-      return created as unknown as SiteMaterial;
-    });
+    }) as unknown as SiteMaterial;
+    await this.recalculateStockRegister(ownerEmail);
+    return created;
   }
 
   async updateSiteMaterial(
@@ -272,7 +349,7 @@ class DbService {
     updates: Partial<SiteMaterial>,
     ownerEmail: string,
   ): Promise<SiteMaterial | null> {
-    return writeDb(async () => {
+    const updated = await writeDb(async () => {
       const old = await prisma.siteMaterial.findFirst({ where: { id, ownerEmail } });
       if (!old) return null;
       const payload = { ...updates } as any;
@@ -282,33 +359,22 @@ class DbService {
           (updates.deliveredQuantityInCft ?? old.deliveredQuantityInCft);
         payload.totalQuantityInSite = updates.deliveredQuantityInCft ?? old.deliveredQuantityInCft;
       }
-      if (old.type === 'delivered' && updates.deliveredQuantityInCft !== undefined) {
-        const stockName = this.mapSpecToStock(old.specName);
-        if (stockName) {
-          const stockItem = await prisma.stockRegisterItem.findFirst({
-            where: { ownerEmail, materialName: stockName },
-          });
-          if (stockItem) {
-            const usedInTonne = stockItem.usedInTonne - old.deliveredQuantityInCft + updates.deliveredQuantityInCft;
-            await prisma.stockRegisterItem.update({
-              where: { id: stockItem.id },
-              data: { usedInTonne, balanceInTonne: stockItem.inTonne - usedInTonne },
-            });
-          }
-        }
-      }
       return prisma.siteMaterial.update({ where: { id }, data: payload });
-    }) as unknown as Promise<SiteMaterial | null>;
+    }) as unknown as SiteMaterial | null;
+    await this.recalculateStockRegister(ownerEmail);
+    return updated;
   }
 
   async deleteSiteMaterial(id: string, ownerEmail: string): Promise<boolean> {
-    return writeDb(async () => {
+    const result = await writeDb(async () => {
       await prisma.siteMaterial.updateMany({
         where: { id, ownerEmail },
         data: { deletedAt: new Date() },
       });
       return true;
     });
+    await this.recalculateStockRegister(ownerEmail);
+    return result;
   }
 
   // ── MODULE 5 — PRIVATE WORKS ──────────────────────────────────────────────
@@ -393,9 +459,11 @@ class DbService {
   ): Promise<TarLoad> {
     const parsed = parseDates(data, ['purchasedDate', 'currentStockDate', 'paymentBillDate']);
     const balanceToBePaid = parsed.amountPerLoad - parsed.paidAmount;
-    return writeDb(() => prisma.tarLoad.create({
+    const created = await writeDb(() => prisma.tarLoad.create({
       data: { ...parsed, balanceToBePaid, ownerEmail } as any,
-    })) as unknown as Promise<TarLoad>;
+    })) as unknown as TarLoad;
+    await this.recalculateStockRegister(ownerEmail);
+    return created;
   }
 
   async updateTarLoad(
@@ -403,7 +471,7 @@ class DbService {
     updates: Partial<TarLoad>,
     ownerEmail: string,
   ): Promise<TarLoad | null> {
-    return writeDb(async () => {
+    const updated = await writeDb(async () => {
       const old = await prisma.tarLoad.findFirst({ where: { id, ownerEmail } });
       if (!old) return null;
       const parsedUpdates = parseDates(updates, ['purchasedDate', 'currentStockDate', 'paymentBillDate']);
@@ -414,17 +482,21 @@ class DbService {
           (parsedUpdates.paidAmount ?? old.paidAmount);
       }
       return prisma.tarLoad.update({ where: { id }, data: payload });
-    }) as unknown as Promise<TarLoad | null>;
+    }) as unknown as TarLoad | null;
+    await this.recalculateStockRegister(ownerEmail);
+    return updated;
   }
 
   async deleteTarLoad(id: string, ownerEmail: string): Promise<boolean> {
-    return writeDb(async () => {
+    const result = await writeDb(async () => {
       await prisma.tarLoad.updateMany({
         where: { id, ownerEmail },
         data: { deletedAt: new Date() },
       });
       return true;
     });
+    await this.recalculateStockRegister(ownerEmail);
+    return result;
   }
 
   // ── MODULE 7 — WORK BASED ENTRIES ─────────────────────────────────────────

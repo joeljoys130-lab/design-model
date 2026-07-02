@@ -68,6 +68,7 @@ export function CementLoadView({
   const [paidAmount, setPaidAmount] = useState(0);
   const [purchaseDate, setPurchaseDate] = useState("");
   const [buyerName, setBuyerName] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [remarks, setRemarks] = useState("");
 
   // Current Stock Available
@@ -96,6 +97,7 @@ export function CementLoadView({
     setPaidAmount(0);
     setPurchaseDate("");
     setBuyerName("");
+    setInvoiceNumber("");
     setRemarks("");
 
     setCurrentStockDate("");
@@ -119,7 +121,7 @@ export function CementLoadView({
       loadInBags: Number(loadInBags),
       amountPerLoad: Number(amountPerLoad),
       paidAmount: Number(paidAmount),
-      purchaseDate, buyerName, remarks,
+      purchaseDate, buyerName, invoiceNumber, remarks,
 
       // Current Stock Available
       currentStockDate,
@@ -159,6 +161,7 @@ export function CementLoadView({
     setPaidAmount(load.paidAmount);
     setPurchaseDate(formatDate(load.purchaseDate));
     setBuyerName(load.buyerName);
+    setInvoiceNumber(load.invoiceNumber || "");
     setRemarks(load.remarks || "");
 
     setCurrentStockDate(formatDate(load.currentStockDate));
@@ -285,14 +288,14 @@ export function CementLoadView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Load In Tonne</label>
               <input 
-                type="number" step="any" required value={loadInTonne} onChange={(e) => setLoadInTonne(Number(e.target.value))}
+                type="number" step="any" required value={loadInTonne === 0 ? "" : loadInTonne} onChange={(e) => setLoadInTonne(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Load In No. Of Pack</label>
               <input 
-                type="number" required value={loadInBags} onChange={(e) => setLoadInBags(Number(e.target.value))}
+                type="number" required value={loadInBags === 0 ? "" : loadInBags} onChange={(e) => setLoadInBags(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
@@ -305,16 +308,24 @@ export function CementLoadView({
               />
             </div>
             <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Invoice Number</label>
+              <input 
+                type="text" required value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)}
+                className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
+                placeholder="Invoice Number"
+              />
+            </div>
+            <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Amount Per Load</label>
               <input 
-                type="number" required value={amountPerLoad} onChange={(e) => setAmountPerLoad(Number(e.target.value))}
+                type="number" required value={amountPerLoad === 0 ? "" : amountPerLoad} onChange={(e) => setAmountPerLoad(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Paid Amount</label>
               <input 
-                type="number" required value={paidAmount} onChange={(e) => setPaidAmount(Number(e.target.value))}
+                type="number" required value={paidAmount === 0 ? "" : paidAmount} onChange={(e) => setPaidAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
@@ -348,14 +359,14 @@ export function CementLoadView({
               <div>
                 <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Stock</label>
                 <input 
-                  type="number" value={currentStockQty} onChange={(e) => setCurrentStockQty(Number(e.target.value))}
+                  type="number" value={currentStockQty === 0 ? "" : currentStockQty} onChange={(e) => setCurrentStockQty(e.target.value === "" ? 0 : Number(e.target.value))}
                   className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
                 />
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Used</label>
                 <input 
-                  type="number" value={currentStockUsed} onChange={(e) => setCurrentStockUsed(Number(e.target.value))}
+                  type="number" value={currentStockUsed === 0 ? "" : currentStockUsed} onChange={(e) => setCurrentStockUsed(e.target.value === "" ? 0 : Number(e.target.value))}
                   className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
                 />
               </div>
@@ -368,14 +379,14 @@ export function CementLoadView({
               <div>
                 <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">U Amount</label>
                 <input 
-                  type="number" value={currentStockUsedAmount} onChange={(e) => setCurrentStockUsedAmount(Number(e.target.value))}
+                  type="number" value={currentStockUsedAmount === 0 ? "" : currentStockUsedAmount} onChange={(e) => setCurrentStockUsedAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                   className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
                 />
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Bal Amount</label>
                 <input 
-                  type="number" value={currentStockBalanceAmount} onChange={(e) => setCurrentStockBalanceAmount(Number(e.target.value))}
+                  type="number" value={currentStockBalanceAmount === 0 ? "" : currentStockBalanceAmount} onChange={(e) => setCurrentStockBalanceAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                   className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
                 />
               </div>
@@ -397,7 +408,7 @@ export function CementLoadView({
               <div>
                 <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Bill Amount</label>
                 <input 
-                  type="number" value={paymentBillAmount} onChange={(e) => setPaymentBillAmount(Number(e.target.value))}
+                  type="number" value={paymentBillAmount === 0 ? "" : paymentBillAmount} onChange={(e) => setPaymentBillAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                   className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
                 />
               </div>
@@ -411,7 +422,7 @@ export function CementLoadView({
               <div>
                 <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Paid Amount</label>
                 <input 
-                  type="number" value={paymentPaidAmount} onChange={(e) => setPaymentPaidAmount(Number(e.target.value))}
+                  type="number" value={paymentPaidAmount === 0 ? "" : paymentPaidAmount} onChange={(e) => setPaymentPaidAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                   className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
                 />
               </div>
@@ -589,6 +600,7 @@ export function EntryView({
   const [assistantEngineerPhone, setAssistantEngineerPhone] = useState("");
   const [blockEngineerName, setBlockEngineerName] = useState("");
   const [blockEngineerPhone, setBlockEngineerPhone] = useState("");
+  const [gstApplicable, setGstApplicable] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const clearForm = () => {
@@ -606,6 +618,7 @@ export function EntryView({
     setNameOfOffice("");
     setMlaMpName("");
     setLoaReceived(false);
+    setGstApplicable(false);
     setLastDateToExecuteAgreement("");
     setAmountOfStampPaperRequired(0);
     setSecurityAmount(0);
@@ -624,6 +637,7 @@ export function EntryView({
       nameOfOffice,
       mlaMpName: mlaMpName || "",
       loaReceived,
+      gstApplicable,
       lastDateToExecuteAgreement,
       amountOfStampPaperRequired: Number(amountOfStampPaperRequired),
       securityAmount: Number(securityAmount),
@@ -665,6 +679,7 @@ export function EntryView({
     setNameOfOffice(entry.nameOfOffice);
     setMlaMpName(entry.mlaMpName || "");
     setLoaReceived(entry.loaReceived);
+    setGstApplicable(entry.gstApplicable || false);
     setLastDateToExecuteAgreement(formatDate(entry.lastDateToExecuteAgreement));
     setAmountOfStampPaperRequired(entry.amountOfStampPaperRequired);
     setSecurityAmount(entry.securityAmount);
@@ -751,10 +766,10 @@ export function EntryView({
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Amount</label>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Amount (Without GST)</label>
               <input 
-                type="number" required value={amount} onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
+                type="number" required value={amount === 0 ? "" : amount} onChange={(e) => setAmount(e.target.value === "" ? 0 : Number(e.target.value))}
+                className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
               />
             </div>
             <div>
@@ -784,6 +799,16 @@ export function EntryView({
               </select>
             </div>
             <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">GST Applicable (18%)</label>
+              <select 
+                value={gstApplicable ? "true" : "false"} onChange={(e) => setGstApplicable(e.target.value === "true")}
+                className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black text-black bg-white"
+              >
+                <option value="false">No / Exempt</option>
+                <option value="true">Yes / Applicable</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Last Date To Execute Agreement</label>
               <input 
                 type="date" required value={lastDateToExecuteAgreement} onChange={(e) => setLastDateToExecuteAgreement(e.target.value)}
@@ -793,21 +818,21 @@ export function EntryView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Amount Of Stamp Paper Required</label>
               <input 
-                type="number" required value={amountOfStampPaperRequired} onChange={(e) => setAmountOfStampPaperRequired(Number(e.target.value))}
+                type="number" required value={amountOfStampPaperRequired === 0 ? "" : amountOfStampPaperRequired} onChange={(e) => setAmountOfStampPaperRequired(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Security Amount</label>
               <input 
-                type="number" required value={securityAmount} onChange={(e) => setSecurityAmount(Number(e.target.value))}
+                type="number" required value={securityAmount === 0 ? "" : securityAmount} onChange={(e) => setSecurityAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Performance Guarantee (If Applicable)</label>
               <input 
-                type="number" value={performanceGuarantee} onChange={(e) => setPerformanceGuarantee(Number(e.target.value))}
+                type="number" value={performanceGuarantee === 0 ? "" : performanceGuarantee} onChange={(e) => setPerformanceGuarantee(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
@@ -948,7 +973,7 @@ export function EntryView({
               <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] text-neutral-400">
                 <th className="p-3">Work Name</th>
                 <th className="p-3">Office</th>
-                <th className="p-3 text-right">Amount</th>
+                <th className="p-3 text-right">Amount (Without GST)</th>
                 <th className="p-3">Agreement No.</th>
                 <th className="p-3">Handover</th>
                 <th className="p-3">Completion Date</th>
@@ -1096,10 +1121,10 @@ export function StockRegisterView({
             <div key={item.id} style={{ borderLeftColor: borderColor }} className="border border-neutral-200 border-l-4 bg-white p-4 rounded shadow-sm hover:shadow-md transition-all duration-200">
               <div className="text-[10px] uppercase font-bold text-neutral-400">{item.materialName} Balance</div>
               <div className="text-2xl font-mono font-bold mt-1 text-black">
-                {balance.toLocaleString()} T
+                {balance.toFixed(3)} T
               </div>
               <div className="text-[10px] text-neutral-500 mt-1">
-                {item.usedInTonne.toLocaleString()} T used of {item.inTonne.toLocaleString()} T
+                {item.usedInTonne.toFixed(3)} T used of {item.inTonne.toFixed(3)} T
               </div>
             </div>
           );
@@ -1115,28 +1140,28 @@ export function StockRegisterView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">In Barrel</label>
               <input 
-                type="number" required value={inBarrel} onChange={(e) => setInBarrel(Number(e.target.value))}
+                type="number" required value={inBarrel === 0 ? "" : inBarrel} onChange={(e) => setInBarrel(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">In KG</label>
               <input 
-                type="number" required value={inKg} onChange={(e) => setInKg(Number(e.target.value))}
+                type="number" required value={inKg === 0 ? "" : inKg} onChange={(e) => setInKg(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">In Tonne</label>
               <input 
-                type="number" required value={inTonne} onChange={(e) => setInTonne(Number(e.target.value))}
+                type="number" required value={inTonne === 0 ? "" : inTonne} onChange={(e) => setInTonne(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Used In Tonne</label>
               <input 
-                type="number" required value={usedInTonne} onChange={(e) => setUsedInTonne(Number(e.target.value))}
+                type="number" required value={usedInTonne === 0 ? "" : usedInTonne} onChange={(e) => setUsedInTonne(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
               />
             </div>
@@ -1206,11 +1231,11 @@ export function StockRegisterView({
                 <tr key={item.id} className="hover:bg-neutral-55">
                   <td className="p-3.5 font-bold text-black">{item.materialName}</td>
                   <td className="p-3.5 text-right font-mono text-black">{item.inBarrel.toLocaleString()}</td>
-                  <td className="p-3.5 text-right font-mono text-black">{item.inKg.toLocaleString()} KG</td>
-                  <td className="p-3.5 text-right font-mono text-black">{item.inTonne.toLocaleString()} T</td>
-                  <td className="p-3.5 text-right font-mono text-neutral-500">{item.usedInTonne.toLocaleString()} T</td>
+                  <td className="p-3.5 text-right font-mono text-black">{item.inKg.toFixed(3)} KG</td>
+                  <td className="p-3.5 text-right font-mono text-black">{item.inTonne.toFixed(3)} T</td>
+                  <td className="p-3.5 text-right font-mono text-neutral-500">{item.usedInTonne.toFixed(3)} T</td>
                   <td className="p-3.5 text-right font-mono font-bold text-black border-l border-neutral-50 bg-neutral-50">
-                    {(item.inTonne - item.usedInTonne).toLocaleString()} T
+                    {(item.inTonne - item.usedInTonne).toFixed(3)} T
                   </td>
                   <td className="p-3.5 text-right">
                     <button onClick={() => handleEdit(item)} className="px-2 py-1 border border-neutral-300 rounded text-[10px] font-bold text-black hover:bg-neutral-100 cursor-pointer">
@@ -1282,6 +1307,8 @@ export function MaterialsUsedView({
   const [estimatedQuantity, setEstimatedQuantity] = useState(0);
   const [deliveredQuantity, setDeliveredQuantity] = useState(0);
   const [specName, setSpecName] = useState("");
+  const [unit, setUnit] = useState("cft");
+  const [qtyInCum, setQtyInCum] = useState<number | "">("");
 
   const selectedEntry = entries.find(e => e.id === selectedEntryId);
   const selectedPrivate = privateWorks?.find(p => p.id === selectedEntryId);
@@ -1292,6 +1319,8 @@ export function MaterialsUsedView({
     setSpecName("");
     setEstimatedQuantity(0);
     setDeliveredQuantity(0);
+    setUnit("cft");
+    setQtyInCum("");
   };
 
   const handleAddItem = async (e: React.FormEvent) => {
@@ -1302,6 +1331,7 @@ export function MaterialsUsedView({
       type: itemType,
       itemSlNo,
       specName,
+      unit,
       estimatedQuantity: Number(estimatedQuantity),
       deliveredQuantityInCft: Number(deliveredQuantity)
     });
@@ -1313,6 +1343,7 @@ export function MaterialsUsedView({
   const handleEditItem = (item: SiteMaterial, type: 'to_deliver' | 'delivered') => {
     setItemSlNo(item.itemSlNo);
     setSpecName(item.specName);
+    setUnit(item.unit || "cft");
     if (type === 'to_deliver') {
       setEstimatedQuantity(item.estimatedQuantity);
       setDeliveredQuantity(0);
@@ -1500,8 +1531,8 @@ export function MaterialsUsedView({
               </h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Sl No</label>
-                  <input type="text" required value={itemSlNo} onChange={(e) => setItemSlNo(e.target.value)} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs" />
+                  <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Sl No (Auto)</label>
+                  <input type="text" readOnly value={itemSlNo} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs bg-neutral-50 text-neutral-500 cursor-not-allowed" />
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Spec/Item Name</label>
@@ -1528,13 +1559,74 @@ export function MaterialsUsedView({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Estimated Quantity</label>
-                  <input type="number" required value={estimatedQuantity} onChange={(e) => setEstimatedQuantity(Number(e.target.value))} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono" />
+                  <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Select Unit</label>
+                  <select 
+                    value={unit} 
+                    onChange={(e) => {
+                      setUnit(e.target.value);
+                      setQtyInCum("");
+                      if (e.target.value !== "cum") {
+                        setEstimatedQuantity(0);
+                        setDeliveredQuantity(0);
+                      }
+                    }}
+                    className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs text-black bg-white focus:outline-none focus:border-black"
+                  >
+                    <option value="cft">cft (cubic feet)</option>
+                    <option value="cum">cum (m³)</option>
+                    <option value="sqm">sqm</option>
+                    <option value="meter">meter</option>
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Delivered Qty (CFT)</label>
-                  <input type="number" required value={deliveredQuantity} onChange={(e) => setDeliveredQuantity(Number(e.target.value))} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono" />
-                </div>
+                {unit === "cum" && (
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Quantity in CUM</label>
+                    <input 
+                      type="number" 
+                      step="any"
+                      required 
+                      value={qtyInCum} 
+                      onChange={(e) => {
+                        const cumVal = e.target.value === "" ? "" : Number(e.target.value);
+                        setQtyInCum(cumVal);
+                        if (cumVal !== "") {
+                          const cftVal = Math.round(cumVal * 35.3147 * 1000) / 1000;
+                          if (itemType === 'to_deliver') {
+                            setEstimatedQuantity(cftVal);
+                          } else {
+                            setDeliveredQuantity(cftVal);
+                          }
+                        }
+                      }} 
+                      className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono text-black bg-white" 
+                    />
+                  </div>
+                )}
+                {itemType === 'to_deliver' ? (
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Estimated Quantity {unit === "cum" ? "(Auto-calculated CFT)" : `(${unit})`}</label>
+                    <input 
+                      type="number" 
+                      required 
+                      readOnly={unit === "cum"}
+                      value={estimatedQuantity === 0 ? "" : estimatedQuantity} 
+                      onChange={(e) => setEstimatedQuantity(e.target.value === "" ? 0 : Number(e.target.value))} 
+                      className={`w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono ${unit === "cum" ? "bg-neutral-50 text-neutral-500 cursor-not-allowed" : "text-black bg-white"}`} 
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Delivered Qty {unit === "cum" ? "(Auto-calculated CFT)" : `(${unit})`}</label>
+                    <input 
+                      type="number" 
+                      required 
+                      readOnly={unit === "cum"}
+                      value={deliveredQuantity === 0 ? "" : deliveredQuantity} 
+                      onChange={(e) => setDeliveredQuantity(e.target.value === "" ? 0 : Number(e.target.value))} 
+                      className={`w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono ${unit === "cum" ? "bg-neutral-50 text-neutral-500 cursor-not-allowed" : "text-black bg-white"}`} 
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex justify-end gap-2 border-t border-neutral-50 pt-3">
                 <button type="button" onClick={clearForm} className="px-3 py-1 border border-neutral-200 text-xs rounded">Clear</button>
@@ -1549,7 +1641,7 @@ export function MaterialsUsedView({
             <div className="bg-neutral-50 p-3 border-b border-neutral-200 flex justify-between items-center">
               <h3 className="font-bold text-xs uppercase text-neutral-800">1. Estimate Quantity</h3>
               <button 
-                onClick={() => { setItemType('to_deliver'); setShowItemForm(true); }}
+                onClick={() => { setItemType('to_deliver'); setShowItemForm(true); setItemSlNo((toDeliverList.length + 1).toString()); }}
                 className="px-2 py-1 bg-black text-white hover:bg-neutral-900 text-[10px] font-bold uppercase rounded flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Add Item
@@ -1560,6 +1652,7 @@ export function MaterialsUsedView({
                 <tr className="bg-neutral-100 border-b border-neutral-200 font-bold uppercase text-[9px] text-neutral-400">
                   <th className="p-3">Sl No</th>
                   <th className="p-3">Spec Name</th>
+                  <th className="p-3">Unit</th>
                   <th className="p-3 text-right">Est. Qty</th>
                   <th className="p-3 text-right">Delivered Qty In CFT</th>
                   <th className="p-3 text-right">Bal Qty In CFT</th>
@@ -1578,9 +1671,10 @@ export function MaterialsUsedView({
                     <tr key={item.id} className="hover:bg-neutral-50/50">
                       <td className="p-3 font-mono">{item.itemSlNo}</td>
                       <td className="p-3 font-semibold">{item.specName}</td>
+                      <td className="p-3 text-[10px] font-bold uppercase text-neutral-500">{item.unit || "cft"}</td>
                       <td className="p-3 text-right font-mono">
                         {editingItemId === item.id && itemType === 'to_deliver' ? (
-                          <input type="number" value={estimatedQuantity} onChange={e => setEstimatedQuantity(Number(e.target.value))} className="w-16 p-0.5 border rounded" />
+                          <input type="number" value={estimatedQuantity === 0 ? "" : estimatedQuantity} onChange={(e) => setEstimatedQuantity(e.target.value === "" ? 0 : Number(e.target.value))} className="w-16 p-0.5 border rounded" />
                         ) : (
                           item.estimatedQuantity
                         )}
@@ -1624,7 +1718,7 @@ export function MaterialsUsedView({
             <div className="bg-neutral-50 p-3 border-b border-neutral-200 flex justify-between items-center">
               <h3 className="font-bold text-xs uppercase text-neutral-800">2. Actual Quantity delivered in site</h3>
               <button 
-                onClick={() => { setItemType('delivered'); setShowItemForm(true); }}
+                onClick={() => { setItemType('delivered'); setShowItemForm(true); setItemSlNo((deliveredList.length + 1).toString()); }}
                 className="px-2 py-1 bg-black text-white hover:bg-neutral-900 text-[10px] font-bold uppercase rounded flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Add Item
@@ -1635,6 +1729,7 @@ export function MaterialsUsedView({
                 <tr className="bg-neutral-100 border-b border-neutral-200 font-bold uppercase text-[9px] text-neutral-400">
                   <th className="p-3">Sl No</th>
                   <th className="p-3">Spec Name</th>
+                  <th className="p-3">Unit</th>
                   <th className="p-3 text-right">Est. Qty</th>
                   <th className="p-3 text-right">Delivered Qty In CFT</th>
                   <th className="p-3 text-right">Bal Qty In CFT</th>
@@ -1666,10 +1761,11 @@ export function MaterialsUsedView({
                     <tr key={item.id} style={rowStyle} className="hover:bg-neutral-50/50 transition-colors">
                       <td className="p-3 font-mono">{item.itemSlNo}</td>
                       <td className="p-3 font-semibold">{item.specName}</td>
+                      <td className="p-3 text-[10px] font-bold uppercase text-neutral-500">{item.unit || "cft"}</td>
                       <td className="p-3 text-right font-mono">{totalEstimated}</td>
                       <td className="p-3 text-right font-mono">
                         {editingItemId === item.id && itemType === 'delivered' ? (
-                          <input type="number" value={deliveredQuantity} onChange={e => setDeliveredQuantity(Number(e.target.value))} className="w-16 p-0.5 border rounded" />
+                          <input type="number" value={deliveredQuantity === 0 ? "" : deliveredQuantity} onChange={(e) => setDeliveredQuantity(e.target.value === "" ? 0 : Number(e.target.value))} className="w-16 p-0.5 border rounded" />
                         ) : (
                           item.deliveredQuantityInCft
                         )}
@@ -1849,7 +1945,7 @@ export function PrivateWorkView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Approx Amount (₹)</label>
               <input 
-                type="number" required value={approxAmount} onChange={(e) => setApproxAmount(Number(e.target.value))}
+                type="number" required value={approxAmount === 0 ? "" : approxAmount} onChange={(e) => setApproxAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
@@ -1886,21 +1982,21 @@ export function PrivateWorkView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Advance Received (₹)</label>
               <input 
-                type="number" value={advanceReceived} onChange={(e) => setAdvanceReceived(Number(e.target.value))}
+                type="number" value={advanceReceived === 0 ? "" : advanceReceived} onChange={(e) => setAdvanceReceived(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Approx Final Work Amount (₹)</label>
               <input 
-                type="number" required value={approxFinalWorkAmount} onChange={(e) => setApproxFinalWorkAmount(Number(e.target.value))}
+                type="number" required value={approxFinalWorkAmount === 0 ? "" : approxFinalWorkAmount} onChange={(e) => setApproxFinalWorkAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Payment Received (₹)</label>
               <input 
-                type="number" required value={paymentReceived} onChange={(e) => setPaymentReceived(Number(e.target.value))}
+                type="number" required value={paymentReceived === 0 ? "" : paymentReceived} onChange={(e) => setPaymentReceived(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
@@ -2017,6 +2113,7 @@ export function TarLoadView({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // States
   const [purchasedFrom, setPurchasedFrom] = useState("");
@@ -2047,27 +2144,35 @@ export function TarLoadView({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      purchasedFrom,
-      item,
-      quantityInKg: Number(quantityInKg),
-      loadInNoOfPack: Number(loadInNoOfPack),
-      addressedOffice,
-      amountPerLoad: Number(amountPerLoad),
-      paidAmount: Number(paidAmount),
-      purchasedDate,
-      billingNameBuyer,
-      remarks
-    };
-    if (editingId) {
-      await onUpdateTarLoad(editingId, payload);
-    } else {
-      await onCreateTarLoad(payload);
+    if (saving) return;
+    setSaving(true);
+    try {
+      const payload = {
+        purchasedFrom,
+        item,
+        quantityInKg: Number(quantityInKg),
+        loadInNoOfPack: Number(loadInNoOfPack),
+        addressedOffice,
+        amountPerLoad: Number(amountPerLoad),
+        paidAmount: Number(paidAmount),
+        purchasedDate,
+        billingNameBuyer,
+        remarks
+      };
+      if (editingId) {
+        await onUpdateTarLoad(editingId, payload);
+      } else {
+        await onCreateTarLoad(payload);
+      }
+      clearForm();
+      setEditingId(null);
+      setShowForm(false);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
     }
-    clearForm();
-    setEditingId(null);
-    setShowForm(false);
-    onRefresh();
   };
 
   const handleEdit = (load: TarLoad) => {
@@ -2188,14 +2293,14 @@ export function TarLoadView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Quantity In KG</label>
               <input 
-                type="number" required value={quantityInKg} onChange={(e) => setQuantityInKg(Number(e.target.value))}
+                type="number" required value={quantityInKg === 0 ? "" : quantityInKg} onChange={(e) => setQuantityInKg(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Load In No. Of Pack</label>
               <input 
-                type="number" required value={loadInNoOfPack} onChange={(e) => setLoadInNoOfPack(Number(e.target.value))}
+                type="number" required value={loadInNoOfPack === 0 ? "" : loadInNoOfPack} onChange={(e) => setLoadInNoOfPack(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
@@ -2216,14 +2321,14 @@ export function TarLoadView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Amount Per Load</label>
               <input 
-                type="number" required value={amountPerLoad} onChange={(e) => setAmountPerLoad(Number(e.target.value))}
+                type="number" required value={amountPerLoad === 0 ? "" : amountPerLoad} onChange={(e) => setAmountPerLoad(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Paid Amount</label>
               <input 
-                type="number" required value={paidAmount} onChange={(e) => setPaidAmount(Number(e.target.value))}
+                type="number" required value={paidAmount === 0 ? "" : paidAmount} onChange={(e) => setPaidAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
@@ -2250,9 +2355,9 @@ export function TarLoadView({
           </div>
 
           <div className="flex gap-2 justify-end border-t border-neutral-100 pt-3">
-            <button type="button" onClick={clearForm} className="px-3 py-1.5 border border-neutral-200 hover:bg-neutral-50 text-xs font-semibold rounded">Clear</button>
-            <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="px-3 py-1.5 border border-neutral-200 hover:bg-neutral-50 text-xs font-semibold rounded">Cancel</button>
-            <button type="submit" className="px-3 py-1.5 bg-black text-white hover:bg-neutral-900 text-xs font-semibold rounded">{editingId ? "Update" : "Save"}</button>
+            <button type="button" disabled={saving} onClick={clearForm} className="px-3 py-1.5 border border-neutral-200 hover:bg-neutral-50 text-xs font-semibold rounded disabled:opacity-50">Clear</button>
+            <button type="button" disabled={saving} onClick={() => { setShowForm(false); setEditingId(null); }} className="px-3 py-1.5 border border-neutral-200 hover:bg-neutral-50 text-xs font-semibold rounded disabled:opacity-50">Cancel</button>
+            <button type="submit" disabled={saving} className="px-3 py-1.5 bg-black text-white hover:bg-neutral-900 text-xs font-semibold rounded disabled:opacity-50">{saving ? "Saving..." : (editingId ? "Update" : "Save")}</button>
           </div>
         </form>
       )}
@@ -2492,11 +2597,11 @@ export function WorkBasedEntryView({
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Item Quantity</label>
-                  <input type="number" required value={itemQuantity} onChange={(e) => setItemQuantity(Number(e.target.value))} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono" />
+                  <input type="number" required value={itemQuantity === 0 ? "" : itemQuantity} onChange={(e) => setItemQuantity(e.target.value === "" ? 0 : Number(e.target.value))} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono" />
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Item Rate</label>
-                  <input type="number" required value={itemRateAsPerEstimate} onChange={(e) => setItemRateAsPerEstimate(Number(e.target.value))} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono" />
+                  <input type="number" required value={itemRateAsPerEstimate === 0 ? "" : itemRateAsPerEstimate} onChange={(e) => setItemRateAsPerEstimate(e.target.value === "" ? 0 : Number(e.target.value))} className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs font-mono" />
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-neutral-400 mb-1">Item Unit</label>
@@ -3251,7 +3356,7 @@ export function WorkStatusUpdationView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Contract Amount (₹)</label>
               <input 
-                type="number" required value={amount} onChange={(e) => setAmount(Number(e.target.value))}
+                type="number" required value={amount === 0 ? "" : amount} onChange={(e) => setAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black font-mono"
               />
             </div>
@@ -3289,21 +3394,21 @@ export function WorkStatusUpdationView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Amount Of Stamp Paper Required</label>
               <input 
-                type="number" required value={amountOfStampPaperRequired} onChange={(e) => setAmountOfStampPaperRequired(Number(e.target.value))}
+                type="number" required value={amountOfStampPaperRequired === 0 ? "" : amountOfStampPaperRequired} onChange={(e) => setAmountOfStampPaperRequired(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none font-mono"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Security Amount</label>
               <input 
-                type="number" required value={securityAmount} onChange={(e) => setSecurityAmount(Number(e.target.value))}
+                type="number" required value={securityAmount === 0 ? "" : securityAmount} onChange={(e) => setSecurityAmount(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none font-mono"
               />
             </div>
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Performance Guarantee</label>
               <input 
-                type="number" value={performanceGuarantee} onChange={(e) => setPerformanceGuarantee(Number(e.target.value))}
+                type="number" value={performanceGuarantee === 0 ? "" : performanceGuarantee} onChange={(e) => setPerformanceGuarantee(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none font-mono"
               />
             </div>
@@ -3350,7 +3455,7 @@ export function WorkStatusUpdationView({
             <div>
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Payment Received (₹)</label>
               <input 
-                type="number" value={paymentReceived} onChange={(e) => setPaymentReceived(Number(e.target.value))}
+                type="number" value={paymentReceived === 0 ? "" : paymentReceived} onChange={(e) => setPaymentReceived(e.target.value === "" ? 0 : Number(e.target.value))}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none font-mono"
               />
             </div>
@@ -3741,7 +3846,7 @@ export function ProfitCalculationView({
     agreedAmount = selectedWork.type === 'entry' 
       ? selectedWork.original.amount 
       : selectedWork.original.approxFinalWorkAmount;
-    gstApplicable = selectedWork.original.gstApplicable;
+    gstApplicable = selectedWork.original.gstApplicable !== false;
     
     // Calculate materials cost from Cement Loads & Tar Loads
     const cementCost = cementLoads
@@ -3850,6 +3955,20 @@ export function ProfitCalculationView({
             <div className="flex justify-between border-b border-neutral-100 pb-1.5">
               <span className="text-neutral-500 uppercase font-bold text-[9px]">Work Name</span>
               <span className="font-semibold text-black text-right max-w-xs">{selectedWork.name}</span>
+            </div>
+
+            {/* Work Status */}
+            <div className="flex justify-between border-b border-neutral-100 pb-1.5">
+              <span className="text-neutral-500 uppercase font-bold text-[9px]">Work Status</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-sans font-bold ${
+                selectedWork.type === 'entry' && selectedWork.original.status === 'Completed' 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : selectedWork.type === 'private'
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+              }`}>
+                {selectedWork.type === 'entry' ? selectedWork.original.status : 'Ongoing (Private)'}
+              </span>
             </div>
 
             {/* Agreed Amount */}
