@@ -251,8 +251,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                     {entries.filter(e => e.status !== "Completed").length === 0 ? (
                       <p className="text-neutral-500 italic">No ongoing contracts found.</p>
                     ) : (
-                      <div className="border border-neutral-200 rounded overflow-hidden">
-                        <table className="w-full text-left border-collapse">
+                      <div className="border border-neutral-200 rounded overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[600px]">
                           <thead>
                             <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                               <th className="p-3">Work Name</th>
@@ -281,8 +281,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                     {privateWorks.length === 0 ? (
                       <p className="text-neutral-500 italic">No private works found.</p>
                     ) : (
-                      <div className="border border-neutral-200 rounded overflow-hidden">
-                        <table className="w-full text-left border-collapse">
+                      <div className="border border-neutral-200 rounded overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[600px]">
                           <thead>
                             <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                               <th className="p-3">Work Name</th>
@@ -315,8 +315,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                   {entries.length === 0 ? (
                     <p className="text-neutral-500 italic">No government contracts registered.</p>
                   ) : (
-                    <div className="border border-neutral-200 rounded overflow-hidden">
-                      <table className="w-full text-left border-collapse">
+                    <div className="border border-neutral-200 rounded overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                           <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                             <th className="p-3">Work Name</th>
@@ -352,8 +352,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                   {cementLoads.length === 0 ? (
                     <p className="text-neutral-500 italic">No cement loads logged.</p>
                   ) : (
-                    <div className="border border-neutral-200 rounded overflow-hidden">
-                      <table className="w-full text-left border-collapse">
+                    <div className="border border-neutral-200 rounded overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                           <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                             <th className="p-3">Date</th>
@@ -391,8 +391,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                   {tarLoads.length === 0 ? (
                     <p className="text-neutral-500 italic">No tar loads logged.</p>
                   ) : (
-                    <div className="border border-neutral-200 rounded overflow-hidden">
-                      <table className="w-full text-left border-collapse">
+                    <div className="border border-neutral-200 rounded overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>
                           <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                             <th className="p-3">Date</th>
@@ -430,8 +430,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                   {entries.filter(e => e.status === "Completed").length === 0 ? (
                     <p className="text-neutral-500 italic">No completed works found.</p>
                   ) : (
-                    <div className="border border-neutral-200 rounded overflow-hidden">
-                      <table className="w-full text-left border-collapse">
+                    <div className="border border-neutral-200 rounded overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                           <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                             <th className="p-3">Work Name</th>
@@ -472,8 +472,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
 
                   <div>
                     <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">All Valuation Items</h4>
-                    <div className="border border-neutral-200 rounded overflow-hidden">
-                      <table className="w-full text-left border-collapse">
+                    <div className="border border-neutral-200 rounded overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[500px]">
                         <thead>
                           <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                             <th className="p-3">Project / Work Name</th>
@@ -510,8 +510,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                   {expenses.length === 0 ? (
                     <p className="text-neutral-500 italic">No expenses recorded.</p>
                   ) : (
-                    <div className="border border-neutral-200 rounded overflow-hidden">
-                      <table className="w-full text-left border-collapse">
+                    <div className="border border-neutral-200 rounded overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                           <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                             <th className="p-3">Date</th>
@@ -562,8 +562,8 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                   {/* Profitability breakdown per work */}
                   <div>
                     <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Profitability Breakdown by Project</h4>
-                    <div className="border border-neutral-200 rounded overflow-hidden">
-                      <table className="w-full text-left border-collapse">
+                    <div className="border border-neutral-200 rounded overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>
                           <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
                             <th className="p-3">Work Name</th>
