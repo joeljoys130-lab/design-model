@@ -18,7 +18,8 @@ import {
   getCementLoadsAction, getEntriesAction, getStockRegisterAction,
   getSiteMaterialsAction, getPrivateWorksAction, getTarLoadsAction,
   getWorkBasedEntriesAction,
-  createExpenseAction, updateExpenseAction, deleteExpenseAction, getExpensesAction
+  createExpenseAction, updateExpenseAction, deleteExpenseAction, getExpensesAction,
+  getDashboardDataAction
 } from "@/app/actions";
 import DashboardView from "./views/dashboard-view";
 import { 
@@ -58,24 +59,15 @@ export default function DashboardPortal({ initialUser, initialData }: DashboardP
   const refreshAllStates = async () => {
     setLoading(true);
     try {
-      const [cl, ent, stk, sm, pw, tl, wbe, exp] = await Promise.all([
-        getCementLoadsAction(),
-        getEntriesAction(),
-        getStockRegisterAction(),
-        getSiteMaterialsAction(),
-        getPrivateWorksAction(),
-        getTarLoadsAction(),
-        getWorkBasedEntriesAction(),
-        getExpensesAction()
-      ]);
-      setCementLoads(cl);
-      setEntries(ent);
-      setStockRegister(stk);
-      setSiteMaterials(sm);
-      setPrivateWorks(pw);
-      setTarLoads(tl);
-      setWorkBasedEntries(wbe);
-      setExpenses(exp);
+      const data = await getDashboardDataAction();
+      setCementLoads(data.cementLoads || []);
+      setEntries(data.entries || []);
+      setStockRegister(data.stockRegister || []);
+      setSiteMaterials(data.siteMaterials || []);
+      setPrivateWorks(data.privateWorks || []);
+      setTarLoads(data.tarLoads || []);
+      setWorkBasedEntries(data.workBasedEntries || []);
+      setExpenses(data.expenses || []);
     } catch (e) {
       console.error("Failed to refresh dashboard data", e);
     } finally {

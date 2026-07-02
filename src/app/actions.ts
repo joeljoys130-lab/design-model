@@ -195,6 +195,30 @@ export async function deleteExpenseAction(id: string) {
   return dbService.deleteExpense(id, email);
 }
 
+export async function getDashboardDataAction() {
+  const email = await getOwnerEmail();
+  const [cl, ent, stk, sm, pw, tl, wbe, exp] = await Promise.all([
+    dbService.getCementLoads(email),
+    dbService.getEntries(email),
+    dbService.getStockRegister(email),
+    dbService.getSiteMaterials(email),
+    dbService.getPrivateWorks(email),
+    dbService.getTarLoads(email),
+    dbService.getWorkBasedEntries(email),
+    dbService.getExpenses(email)
+  ]);
+  return {
+    cementLoads: cl,
+    entries: ent,
+    stockRegister: stk,
+    siteMaterials: sm,
+    privateWorks: pw,
+    tarLoads: tl,
+    workBasedEntries: wbe,
+    expenses: exp
+  };
+}
+
 // ── Misc (kept for compatibility) ─────────────────────────────────────────────
 
 export async function getNotificationsAction() { return []; }
