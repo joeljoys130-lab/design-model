@@ -14,8 +14,15 @@ let app;
 let auth: any;
 
 if (typeof window !== "undefined" && firebaseConfig.apiKey) {
+  console.log("DEBUG Firebase Config:", {
+    apiKey: firebaseConfig.apiKey,
+    authDomain: firebaseConfig.authDomain,
+    projectId: firebaseConfig.projectId,
+    appId: firebaseConfig.appId,
+  });
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   auth = getAuth(app);
 }
 
 export { app, auth };
+
