@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Mail, Lock, ArrowRight, Building2, Phone, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/router";
+import { auth } from "@/lib/firebase";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 
 interface LoginViewProps {
   onLoginSuccess: (user: any) => void;
@@ -28,6 +30,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [selectedMethod, setSelectedMethod] = useState<'email' | 'phone'>('email');
   const [otp, setOtp] = useState("");
   const [timer, setTimer] = useState(0);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -102,6 +105,40 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     if (!email) return;
     setLoading(true);
     setError("");
+
+    if (selectedMethod === 'phone') {
+      try {
+        if (!auth) {
+          throw new Error("Firebase Auth is not initialized. Please ensure NEXT_PUBLIC_FIREBASE_* environment variables are set in your deployment.");
+        }
+        if (!userInfo?.phoneNumber) {
+          setError("No verified phone number registered.");
+          setLoading(false);
+          return;
+        }
+
+        // Initialize RecaptchaVerifier on demand
+        if (!(window as any).recaptchaVerifier) {
+          (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible',
+            callback: () => {}
+          });
+        }
+        
+        const verifier = (window as any).recaptchaVerifier;
+        const confirmation = await signInWithPhoneNumber(auth, userInfo.phoneNumber, verifier);
+        setConfirmationResult(confirmation);
+        setTimer(30); // 30-second cooldown
+        setStep("otp");
+      } catch (err: any) {
+        console.error("Firebase SMS dispatch failed:", err);
+        setError(err.message || "Failed to send SMS OTP via Firebase.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     try {
       const res = await fetch("/api/request-otp", {
         method: "POST",
@@ -126,6 +163,29 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     if (timer > 0 || loading) return;
     setLoading(true);
     setError("");
+
+    if (selectedMethod === 'phone') {
+      try {
+        if (!auth) {
+          throw new Error("Firebase Auth is not initialized. Please ensure NEXT_PUBLIC_FIREBASE_* environment variables are set.");
+        }
+        if (!userInfo?.phoneNumber) {
+          setError("No verified phone number registered.");
+          setLoading(false);
+          return;
+        }
+        const verifier = (window as any).recaptchaVerifier;
+        const confirmation = await signInWithPhoneNumber(auth, userInfo.phoneNumber, verifier);
+        setConfirmationResult(confirmation);
+        setTimer(30);
+      } catch (err: any) {
+        setError(err.message || "Failed to resend SMS OTP.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     try {
       const res = await fetch("/api/request-otp", {
         method: "POST",
@@ -155,6 +215,38 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    if (selectedMethod === 'phone') {
+      if (!confirmationResult) {
+        setError("No verification flow active. Please request a new OTP.");
+        setLoading(false);
+        return;
+      }
+      try {
+        const userCredential = await confirmationResult.confirm(otp);
+        const firebaseToken = await userCredential.user.getIdToken();
+
+        const res = await fetch("/api/verify-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, firebaseToken, method: 'phone' }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          onLoginSuccess(data.user);
+        } else {
+          setError(data.error ?? "Verification failed.");
+        }
+      } catch (err: any) {
+        console.error("Firebase OTP verification failed:", err);
+        setError(err.message || "Invalid OTP code.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     try {
       const res = await fetch("/api/verify-otp", {
         method: "POST",
@@ -254,6 +346,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                 {error}
               </div>
             )}
+
+            <div id="recaptcha-container"></div>
 
             {/* ── Login form ── */}
             {step === "login" && (
