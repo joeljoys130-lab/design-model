@@ -57,10 +57,23 @@ async function ensureDbUser(email: string): Promise<RegisteredUser | null> {
           name: fallback.name,
           role: fallback.role,
           password: fallback.password,
-          phoneNumber: normEmail === 'test@buildcorp.com' ? '+919999999999' : null,
-          isPhoneVerified: normEmail === 'test@buildcorp.com',
+          phoneNumber: normEmail === 'test@buildcorp.com' ? '+918590591987' : normEmail === 'thomasjosephkidarathil@gmail.com' ? '+919633864150' : null,
+          isPhoneVerified: normEmail === 'test@buildcorp.com' || normEmail === 'thomasjosephkidarathil@gmail.com',
           preferredOtpMethod: 'email',
         },
+      });
+    }
+  } else {
+    // Force update phone number if it doesn't match the new request
+    if (normEmail === 'test@buildcorp.com' && user.phoneNumber !== '+918590591987') {
+      user = await prisma.user.update({
+        where: { email: normEmail },
+        data: { phoneNumber: '+918590591987', isPhoneVerified: true },
+      });
+    } else if (normEmail === 'thomasjosephkidarathil@gmail.com' && user.phoneNumber !== '+919633864150') {
+      user = await prisma.user.update({
+        where: { email: normEmail },
+        data: { phoneNumber: '+919633864150', isPhoneVerified: true },
       });
     }
   }
