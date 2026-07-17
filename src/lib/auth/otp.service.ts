@@ -135,11 +135,21 @@ export class OtpService {
     } else {
       const message = `Your BuildCorp ERP verification OTP is ${otpCode}. Valid for ${OTP_EXPIRY_MINUTES} minutes.`;
       const smsSent = await SmsService.sendSms({ to: destination, message });
-      if (!smsSent) {
-        return {
-          success: false,
-          error: 'Failed to send SMS OTP. Please check the number or try again.',
-        };
+      const isConsole = (process.env.SMS_PROVIDER || 'console').toLowerCase() === 'console';
+
+      if (isConsole || !smsSent) {
+        logger.info(`SMS dispatch was mocked or failed. Dispatching to registered email ${email} as fallback.`);
+        try {
+          await sendOtpEmail(email, otpCode);
+        } catch (emailErr) {
+          logger.error(`Fallback Email dispatch also failed to ${email}: ${(emailErr as Error).message}`);
+          if (!smsSent) {
+            return {
+              success: false,
+              error: 'Failed to send SMS OTP and email fallback. Please try again.',
+            };
+          }
+        }
       }
     }
 

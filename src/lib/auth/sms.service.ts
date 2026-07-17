@@ -14,10 +14,21 @@ export interface SmsSendOptions {
 }
 
 export class SmsService {
-  private static provider = process.env.SMS_PROVIDER || 'console';
-  private static apiKey = process.env.SMS_API_KEY || '';
-  private static apiSecret = process.env.SMS_API_SECRET || '';
-  private static senderId = process.env.SMS_SENDER_ID || 'BUILDCORP';
+  private static getProvider(): string {
+    return process.env.SMS_PROVIDER || 'console';
+  }
+
+  private static getApiKey(): string {
+    return process.env.SMS_API_KEY || '';
+  }
+
+  private static getApiSecret(): string {
+    return process.env.SMS_API_SECRET || '';
+  }
+
+  private static getSenderId(): string {
+    return process.env.SMS_SENDER_ID || 'BUILDCORP';
+  }
 
   /**
    * Mask a phone number to protect user privacy.
@@ -39,11 +50,12 @@ export class SmsService {
    */
   public static async sendSms(options: SmsSendOptions): Promise<boolean> {
     const { to, message } = options;
+    const provider = this.getProvider();
 
-    logger.info(`Sending SMS to ${this.maskPhoneNumber(to)} using provider: ${this.provider}`);
+    logger.info(`Sending SMS to ${this.maskPhoneNumber(to)} using provider: ${provider}`);
 
     try {
-      switch (this.provider.toLowerCase()) {
+      switch (provider.toLowerCase()) {
         case 'twilio':
           return await this.sendViaTwilio(to, message);
         case 'msg91':
@@ -62,22 +74,25 @@ export class SmsService {
           return true;
       }
     } catch (error) {
-      logger.error(`SMS send failure via ${this.provider}: ${(error as Error).message}`);
+      logger.error(`SMS send failure via ${provider}: ${(error as Error).message}`);
       return false;
     }
   }
 
   private static async sendViaTwilio(to: string, message: string): Promise<boolean> {
-    // Twilio REST API integration using fetch
-    if (!this.apiKey || !this.apiSecret) {
+    const apiKey = this.getApiKey();
+    const apiSecret = this.getApiSecret();
+    const senderId = this.getSenderId();
+
+    if (!apiKey || !apiSecret) {
       throw new Error('Twilio credentials missing (SMS_API_KEY/SMS_API_SECRET)');
     }
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${this.apiKey}/Messages.json`;
-    const auth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64');
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${apiKey}/Messages.json`;
+    const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
     
     const body = new URLSearchParams({
       To: to,
-      From: this.senderId || '',
+      From: senderId || '',
       Body: message,
     });
 
@@ -98,13 +113,17 @@ export class SmsService {
   }
 
   private static async sendViaMsg91(to: string, message: string): Promise<boolean> {
-    if (!this.apiKey) {
+    const apiKey = this.getApiKey();
+    const apiSecret = this.getApiSecret();
+    const senderId = this.getSenderId();
+
+    if (!apiKey) {
       throw new Error('MSG91 auth key missing (SMS_API_KEY)');
     }
     const url = 'https://api.msg91.com/api/v5/flow/';
     const payload = {
-      template_id: this.apiSecret, // MSG91 uses template ID in secret/additional config
-      sender: this.senderId,
+      template_id: apiSecret, // MSG91 uses template ID in secret/additional config
+      sender: senderId,
       recipients: [
         {
           mobiles: to.replace('+', ''),
@@ -116,7 +135,7 @@ export class SmsService {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'authkey': this.apiKey,
+        'authkey': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
@@ -130,28 +149,29 @@ export class SmsService {
   }
 
   private static async sendViaFirebase(to: string, message: string): Promise<boolean> {
-    // Firebase Phone Auth is typically client-side, but if triggered via custom backend:
     logger.info(`[Firebase Phone Auth] Triggering SMS verification for ${to}`);
-    // Simulate firebase custom backend send
     return true;
   }
 
   private static async sendViaAwsSns(to: string, message: string): Promise<boolean> {
-    // Standard AWS SNS publish via API if AWS SDK was installed, or logging for now
     logger.info(`[AWS SNS SMS] To: ${to} | Message: ${message}`);
     return true;
   }
 
   private static async sendViaVonage(to: string, message: string): Promise<boolean> {
-    if (!this.apiKey || !this.apiSecret) {
+    const apiKey = this.getApiKey();
+    const apiSecret = this.getApiSecret();
+    const senderId = this.getSenderId();
+
+    if (!apiKey || !apiSecret) {
       throw new Error('Vonage credentials missing (SMS_API_KEY/SMS_API_SECRET)');
     }
     const url = 'https://rest.nexmo.com/sms/json';
     const payload = {
-      api_key: this.apiKey,
-      api_secret: this.apiSecret,
+      api_key: apiKey,
+      api_secret: apiSecret,
       to: to.replace('+', ''),
-      from: this.senderId,
+      from: senderId,
       text: message,
     };
 
