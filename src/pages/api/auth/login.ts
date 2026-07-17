@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: 'Username and password are required' });
   }
 
-  const user = findUser(username.trim());
+  const user = await findUser(username.trim());
   const isTestUser = user?.email.toLowerCase() === 'test@buildcorp.com';
   if (!user || (!isTestUser && user.password !== password)) {
     return res.status(401).json({ success: false, error: 'Invalid username or password' });
@@ -32,10 +32,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   return res.status(200).json({
     success: true,
     user: {
-      id:    user.id,
-      email: user.email,
-      name:  user.name,
-      role:  user.role,
+      id:                 user.id,
+      email:              user.email,
+      name:               user.name,
+      role:               user.role,
+      phoneNumber:        user.phoneNumber,
+      isPhoneVerified:    user.isPhoneVerified,
+      preferredOtpMethod: user.preferredOtpMethod,
     },
   });
 }

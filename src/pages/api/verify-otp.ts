@@ -1,12 +1,13 @@
 // src/pages/api/verify-otp.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { verifyOTP } from '@/lib/otp-store';
 import { generateAccessToken } from '@/lib/auth/jwt';
 import { findUserByEmail } from '@/lib/auth/users';
+import { OtpService } from '@/lib/auth/otp.service';
+import prisma from '@/lib/prisma';
 
 /**
  * POST /api/verify-otp
- * Body: { email: string; otp: string }
+ * Body: { email: string; otp: string; method?: 'email' | 'phone' }
  *
  * Verifies the OTP from MongoDB, then issues a JWT auth_token cookie.
  */
@@ -16,26 +17,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }
 
-  const { email, otp } = req.body as { email?: string; otp?: string };
+  const { email, otp, method } = req.body as { email?: string; otp?: string; method?: 'email' | 'phone' };
 
   if (!email || !otp) {
     return res.status(400).json({ success: false, error: 'Email and OTP are required' });
   }
 
-  // Verify OTP from MongoDB (async, one-time use)
-  const valid = await verifyOTP(email, otp);
-  if (!valid) {
-    return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
-  }
-
-  // Look up the registered user
-  const user = findUserByEmail(email);
+  const user = await findUserByEmail(email);
   if (!user) {
     return res.status(403).json({ success: false, error: 'User not registered' });
   }
 
+  const selectedMethod = method || (user.preferredOtpMethod as 'email' | 'phone') || 'email';
+  const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '';
+  const userAgent = req.headers['user-agent'] || '';
+
+  // Verify OTP via the unified OtpService
+  const result = await OtpService.verifyOtp({
+    userId: user.id,
+    channel: selectedMethod,
+    otp,
+    email: user.email,
+    ip,
+    userAgent,
+  });
+
+  if (!result.success) {
+    return res.status(400).json({ success: false, error: result.error });
+  }
+
+  // Update preferred/last OTP method in User profile
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      lastOtpMethod: selectedMethod,
+      ...(selectedMethod === 'phone' ? { isPhoneVerified: true } : {}),
+    },
+  });
+
+  // Re-fetch user in case isPhoneVerified or preferredOtpMethod was updated
+  const updatedUser = await prisma.user.findUnique({ where: { id: user.id } });
+  const userData = updatedUser || user;
+
   // Issue JWT (1 hour expiry)
-  const token = generateAccessToken({ id: user.id, email: user.email, name: user.name, role: user.role });
+  const token = generateAccessToken({ id: userData.id, email: userData.email, name: userData.name, role: userData.role });
   const isProd = process.env.NODE_ENV === 'production';
 
   res.setHeader(
@@ -45,6 +70,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json({
     success: true,
-    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+    user: {
+      id: userData.id,
+      email: userData.email,
+      name: userData.name,
+      role: userData.role,
+      phoneNumber: userData.phoneNumber,
+      isPhoneVerified: userData.isPhoneVerified,
+      preferredOtpMethod: userData.preferredOtpMethod,
+    },
   });
 }

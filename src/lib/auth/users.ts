@@ -1,10 +1,11 @@
 /**
  * src/lib/auth/users.ts
  * ─────────────────────────────────────────────────────────────────────────────
- * Single source of truth for registered users.
- * To add a new user, append an entry here.
- * Passwords are plain-text for now — replace with bcrypt hashing when scaling.
+ * Single source of truth for registered users, backed by MongoDB.
+ * Seeds hardcoded admin/test users on demand.
  */
+
+import prisma from '../prisma';
 
 export interface RegisteredUser {
   id: string;
@@ -12,10 +13,14 @@ export interface RegisteredUser {
   name: string;
   role: string;
   password: string;
+  phoneNumber?: string | null;
+  isPhoneVerified?: boolean;
+  preferredOtpMethod?: string;
+  lastOtpMethod?: string | null;
 }
 
-/** All authorised users, keyed by email (lowercase). */
-export const REGISTERED_USERS: Record<string, RegisteredUser> = {
+/** Hardcoded fallback seed users */
+export const REGISTERED_USERS: Record<string, Omit<RegisteredUser, 'phoneNumber' | 'isPhoneVerified' | 'preferredOtpMethod' | 'lastOtpMethod'>> = {
   'thomasjosephkidarathil@gmail.com': {
     id: 'u-thomas',
     email: 'thomasjosephkidarathil@gmail.com',
@@ -32,19 +37,71 @@ export const REGISTERED_USERS: Record<string, RegisteredUser> = {
   },
 };
 
-/** Look up a user by email. Returns undefined if not registered. */
-export function findUserByEmail(email: string): RegisteredUser | undefined {
-  return REGISTERED_USERS[email.toLowerCase()];
+/**
+ * Ensures that a user is in the database (seeding if necessary).
+ */
+async function ensureDbUser(email: string): Promise<RegisteredUser | null> {
+  const normEmail = email.toLowerCase();
+  
+  // Try database lookup first
+  let user = await prisma.user.findUnique({ where: { email: normEmail } });
+  
+  // If not found in DB but exists in hardcoded config, seed it
+  if (!user) {
+    const fallback = REGISTERED_USERS[normEmail];
+    if (fallback) {
+      user = await prisma.user.create({
+        data: {
+          id: fallback.id,
+          email: fallback.email,
+          name: fallback.name,
+          role: fallback.role,
+          password: fallback.password,
+          phoneNumber: normEmail === 'test@buildcorp.com' ? '+919999999999' : null,
+          isPhoneVerified: normEmail === 'test@buildcorp.com',
+          preferredOtpMethod: 'email',
+        },
+      });
+    }
+  }
+  
+  return user ? (user as unknown as RegisteredUser) : null;
 }
 
-/** Look up a user by username or email. Returns undefined if not found. */
-export function findUser(usernameOrEmail: string): RegisteredUser | undefined {
+/** Look up a user by email. Returns null/undefined if not registered. */
+export async function findUserByEmail(email: string): Promise<RegisteredUser | undefined> {
+  const user = await ensureDbUser(email);
+  return user || undefined;
+}
+
+/** Look up a user by username or email. Returns null/undefined if not found. */
+export async function findUser(usernameOrEmail: string): Promise<RegisteredUser | undefined> {
   // Try by email first
-  const byEmail = REGISTERED_USERS[usernameOrEmail.toLowerCase()];
+  const byEmail = await ensureDbUser(usernameOrEmail);
   if (byEmail) return byEmail;
 
-  // Try by matching username prefix (e.g. "thomas" → "thomasjosephkidarathil@gmail.com")
-  return Object.values(REGISTERED_USERS).find(
-    (u) => u.email.split('@')[0].toLowerCase() === usernameOrEmail.toLowerCase(),
+  // Try by matching username prefix in the DB
+  const prefix = usernameOrEmail.toLowerCase();
+  const dbUser = await prisma.user.findFirst({
+    where: {
+      email: {
+        startsWith: prefix + '@',
+        mode: 'insensitive',
+      },
+    },
+  });
+
+  if (dbUser) {
+    return dbUser as unknown as RegisteredUser;
+  }
+
+  // Fallback to searching REGISTERED_USERS
+  const foundFallback = Object.values(REGISTERED_USERS).find(
+    (u) => u.email.split('@')[0].toLowerCase() === prefix,
   );
+  if (foundFallback) {
+    return (await ensureDbUser(foundFallback.email)) || undefined;
+  }
+
+  return undefined;
 }

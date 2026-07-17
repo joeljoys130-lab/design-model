@@ -57,3 +57,11 @@ export function logError(message: string, meta?: Record<string, unknown>) {
 export function logDebug(message: string, meta?: Record<string, unknown>) {
   writeLog({ timestamp: new Date().toISOString(), level: LogLevel.DEBUG, message, meta });
 }
+
+export const logger = {
+  info: logInfo,
+  warn: logWarn,
+  error: logError,
+  debug: logDebug,
+};
+

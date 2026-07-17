@@ -58,6 +58,7 @@ export function CementLoadView({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Fields
   const [purchasedFrom, setPurchasedFrom] = useState("");
@@ -115,40 +116,48 @@ export function CementLoadView({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      purchasedFrom, cementCompany,
-      loadInTonne: Number(loadInTonne),
-      loadInBags: Number(loadInBags),
-      amountPerLoad: Number(amountPerLoad),
-      paidAmount: Number(paidAmount),
-      purchaseDate, buyerName, invoiceNumber, remarks,
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        purchasedFrom, cementCompany,
+        loadInTonne: Number(loadInTonne),
+        loadInBags: Number(loadInBags),
+        amountPerLoad: Number(amountPerLoad),
+        paidAmount: Number(paidAmount),
+        purchaseDate, buyerName, invoiceNumber, remarks,
 
-      // Current Stock Available
-      currentStockDate,
-      currentStockQty: Number(currentStockQty),
-      currentStockUsed: Number(currentStockUsed),
-      currentStockBalance: Number(currentStockQty - currentStockUsed),
-      currentStockUsedAmount: Number(currentStockUsedAmount),
-      currentStockBalanceAmount: Number(currentStockBalanceAmount),
+        // Current Stock Available
+        currentStockDate,
+        currentStockQty: Number(currentStockQty),
+        currentStockUsed: Number(currentStockUsed),
+        currentStockBalance: Number(currentStockQty - currentStockUsed),
+        currentStockUsedAmount: Number(currentStockUsedAmount),
+        currentStockBalanceAmount: Number(currentStockBalanceAmount),
 
-      // Payment Details
-      paymentPartyName,
-      paymentBillAmount: Number(paymentBillAmount),
-      paymentBillDate,
-      paymentPaidAmount: Number(paymentPaidAmount),
-      paymentBalanceAmount: Number(paymentBillAmount - paymentPaidAmount),
-      paymentRemarks
-    };
+        // Payment Details
+        paymentPartyName,
+        paymentBillAmount: Number(paymentBillAmount),
+        paymentBillDate,
+        paymentPaidAmount: Number(paymentPaidAmount),
+        paymentBalanceAmount: Number(paymentBillAmount - paymentPaidAmount),
+        paymentRemarks
+      };
 
-    if (editingId) {
-      await onUpdateCementLoad(editingId, payload);
-    } else {
-      await onCreateCementLoad(payload);
+      if (editingId) {
+        await onUpdateCementLoad(editingId, payload);
+      } else {
+        await onCreateCementLoad(payload);
+      }
+      clearForm();
+      setEditingId(null);
+      setShowForm(false);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
     }
-    clearForm();
-    setEditingId(null);
-    setShowForm(false);
-    onRefresh();
   };
 
   const handleEdit = (load: CementLoad) => {
@@ -456,16 +465,18 @@ export function CementLoadView({
             {!editingId ? (
               <button 
                 type="submit"
-                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer"
+                disabled={isSaving}
+                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer disabled:opacity-50"
               >
-                Save
+                {isSaving ? "Saving..." : "Save"}
               </button>
             ) : (
               <button 
                 type="submit"
-                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer"
+                disabled={isSaving}
+                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer disabled:opacity-50"
               >
-                Update
+                {isSaving ? "Saving..." : "Update"}
               </button>
             )}
             <button 
@@ -574,6 +585,8 @@ export function EntryView({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
 
   // Form states
   const [workName, setWorkName] = useState("");
@@ -631,45 +644,53 @@ export function EntryView({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      workName,
-      amount: Number(amount),
-      nameOfOffice,
-      mlaMpName: mlaMpName || "",
-      loaReceived,
-      gstApplicable,
-      lastDateToExecuteAgreement,
-      amountOfStampPaperRequired: Number(amountOfStampPaperRequired),
-      securityAmount: Number(securityAmount),
-      performanceGuarantee: Number(performanceGuarantee),
-      dlpPeriodAsPerInLOA,
-      agreementNo,
-      siteHandoverDate,
-      workCompletionDateAsPerAgreement,
-      // Contact fields
-      wardMemberName: wardMemberName || "",
-      wardMemberPhone: wardMemberPhone || "",
-      overseerName: overseerName || "",
-      overseerPhone: overseerPhone || "",
-      executiveEngineerName: executiveEngineerName || "",
-      executiveEngineerPhone: executiveEngineerPhone || "",
-      assistantEngineerName: assistantEngineerName || "",
-      assistantEngineerPhone: assistantEngineerPhone || "",
-      blockEngineerName: blockEngineerName || "",
-      blockEngineerPhone: blockEngineerPhone || "",
-      status: 'Not Started',
-      paymentReceived: 0,
-      createdAt: new Date().toISOString()
-    };
-    if (editingId) {
-      await onUpdateEntry(editingId, payload);
-    } else {
-      await onCreateEntry(payload);
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        workName,
+        amount: Number(amount),
+        nameOfOffice,
+        mlaMpName: mlaMpName || "",
+        loaReceived,
+        gstApplicable,
+        lastDateToExecuteAgreement,
+        amountOfStampPaperRequired: Number(amountOfStampPaperRequired),
+        securityAmount: Number(securityAmount),
+        performanceGuarantee: Number(performanceGuarantee),
+        dlpPeriodAsPerInLOA,
+        agreementNo,
+        siteHandoverDate,
+        workCompletionDateAsPerAgreement,
+        // Contact fields
+        wardMemberName: wardMemberName || "",
+        wardMemberPhone: wardMemberPhone || "",
+        overseerName: overseerName || "",
+        overseerPhone: overseerPhone || "",
+        executiveEngineerName: executiveEngineerName || "",
+        executiveEngineerPhone: executiveEngineerPhone || "",
+        assistantEngineerName: assistantEngineerName || "",
+        assistantEngineerPhone: assistantEngineerPhone || "",
+        blockEngineerName: blockEngineerName || "",
+        blockEngineerPhone: blockEngineerPhone || "",
+        status: 'Not Started',
+        paymentReceived: 0,
+        createdAt: new Date().toISOString()
+      };
+      if (editingId) {
+        await onUpdateEntry(editingId, payload);
+      } else {
+        await onCreateEntry(payload);
+      }
+      clearForm();
+      setEditingId(null);
+      setShowForm(false);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
     }
-    clearForm();
-    setEditingId(null);
-    setShowForm(false);
-    onRefresh();
   };
 
   const handleEdit = (entry: Entry) => {
@@ -920,16 +941,18 @@ export function EntryView({
             {!editingId ? (
               <button 
                 type="submit"
-                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer"
+                disabled={isSaving}
+                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer disabled:opacity-50"
               >
-                Save
+                {isSaving ? "Saving..." : "Save"}
               </button>
             ) : (
               <button 
                 type="submit"
-                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer"
+                disabled={isSaving}
+                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer disabled:opacity-50"
               >
-                Update
+                {isSaving ? "Saving..." : "Update"}
               </button>
             )}
             <button 
@@ -985,7 +1008,12 @@ export function EntryView({
               {filteredEntries.map(e => (
                 <tr key={e.id} className="hover:bg-neutral-55">
                   <td className="p-3">
-                    <div className="font-bold text-black">{e.workName}</div>
+                    <button 
+                      onClick={() => setSelectedEntry(e)}
+                      className="font-bold text-black hover:underline text-left cursor-pointer focus:outline-none bg-transparent border-none p-0"
+                    >
+                      {e.workName}
+                    </button>
                   </td>
                   <td className="p-3 text-neutral-600">{e.nameOfOffice}</td>
                   <td className="p-3 text-right font-mono font-bold text-black">₹{e.amount.toLocaleString()}</td>
@@ -1018,6 +1046,160 @@ export function EntryView({
           </table>
         </div>
       </div>
+      
+      {/* Detail Modal */}
+      {selectedEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-xs">
+          <div className="bg-white border border-neutral-300 w-full max-w-3xl rounded shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-neutral-200 bg-neutral-50 flex justify-between items-center">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Project details</span>
+                <h3 className="text-sm font-bold text-black uppercase mt-0.5">{selectedEntry.workName}</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedEntry(null)} 
+                className="p-1 hover:bg-neutral-200 rounded text-neutral-500 hover:text-black cursor-pointer bg-transparent border-none"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-6 text-xs text-neutral-700 text-left">
+              {/* Project General details */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-black border-b border-neutral-200 pb-1 mb-3">Project Overview</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Amount (Without GST)</span>
+                    <span className="font-mono font-bold text-black text-sm">₹{selectedEntry.amount.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">GST Applicable</span>
+                    <span className="font-semibold text-black">{selectedEntry.gstApplicable ? "Yes (18%)" : "No / Exempt"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Total Amount (Inc. GST)</span>
+                    <span className="font-mono font-bold text-black text-sm">
+                      ₹{(selectedEntry.amount * (selectedEntry.gstApplicable ? 1.18 : 1)).toLocaleString()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Office / Authority</span>
+                    <span className="font-semibold text-black">{selectedEntry.nameOfOffice}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">MLA/MP Name</span>
+                    <span className="font-semibold text-black">{selectedEntry.mlaMpName || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">LOA Status</span>
+                    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold border mt-0.5 ${selectedEntry.loaReceived ? 'border-black bg-black text-white' : 'border-neutral-300 bg-white text-neutral-500'}`}>
+                      {selectedEntry.loaReceived ? "RECEIVED" : "PENDING"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Agreement & Financial Securities */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-black border-b border-neutral-200 pb-1 mb-3">Agreement & Security Details</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Agreement No</span>
+                    <span className="font-mono font-semibold text-black">{selectedEntry.agreementNo || "Pending"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Stamp Paper Value</span>
+                    <span className="font-mono font-semibold text-black">₹{selectedEntry.amountOfStampPaperRequired.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Security Deposit</span>
+                    <span className="font-mono font-semibold text-black">₹{selectedEntry.securityAmount.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Performance Guarantee</span>
+                    <span className="font-mono font-semibold text-black">₹{selectedEntry.performanceGuarantee.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">DLP Period</span>
+                    <span className="font-semibold text-black">{selectedEntry.dlpPeriodAsPerInLOA || "N/A"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Current Status</span>
+                    <span className="font-semibold text-black">{selectedEntry.status || "Not Started"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timelines */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-black border-b border-neutral-200 pb-1 mb-3">Execution Timelines</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-y-4 gap-x-6">
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Last Date to Execute Agreement</span>
+                    <span className="font-mono font-semibold text-black">{formatDate(selectedEntry.lastDateToExecuteAgreement)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Site Handover Date</span>
+                    <span className="font-mono font-semibold text-black">{formatDate(selectedEntry.siteHandoverDate)}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Contract Completion Date</span>
+                    <span className="font-mono font-semibold text-black">{formatDate(selectedEntry.workCompletionDateAsPerAgreement)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact directory */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-black border-b border-neutral-200 pb-1 mb-3">Department Contacts</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="border border-neutral-100 p-2.5 rounded bg-neutral-50">
+                    <div className="font-semibold text-black text-[10px] uppercase mb-1">Ward Member</div>
+                    <div>Name: <span className="font-semibold text-black">{selectedEntry.wardMemberName || "N/A"}</span></div>
+                    <div>Phone: <span className="font-semibold text-black">{selectedEntry.wardMemberPhone || "N/A"}</span></div>
+                  </div>
+                  <div className="border border-neutral-100 p-2.5 rounded bg-neutral-50">
+                    <div className="font-semibold text-black text-[10px] uppercase mb-1">Overseer</div>
+                    <div>Name: <span className="font-semibold text-black">{selectedEntry.overseerName || "N/A"}</span></div>
+                    <div>Phone: <span className="font-semibold text-black">{selectedEntry.overseerPhone || "N/A"}</span></div>
+                  </div>
+                  <div className="border border-neutral-100 p-2.5 rounded bg-neutral-50">
+                    <div className="font-semibold text-black text-[10px] uppercase mb-1">Executive Engineer (EE)</div>
+                    <div>Name: <span className="font-semibold text-black">{selectedEntry.executiveEngineerName || "N/A"}</span></div>
+                    <div>Phone: <span className="font-semibold text-black">{selectedEntry.executiveEngineerPhone || "N/A"}</span></div>
+                  </div>
+                  <div className="border border-neutral-100 p-2.5 rounded bg-neutral-50">
+                    <div className="font-semibold text-black text-[10px] uppercase mb-1">Assistant Engineer (AE)</div>
+                    <div>Name: <span className="font-semibold text-black">{selectedEntry.assistantEngineerName || "N/A"}</span></div>
+                    <div>Phone: <span className="font-semibold text-black">{selectedEntry.assistantEngineerPhone || "N/A"}</span></div>
+                  </div>
+                  <div className="border border-neutral-100 p-2.5 rounded bg-neutral-50 sm:col-span-2">
+                    <div className="font-semibold text-black text-[10px] uppercase mb-1">Block Engineer</div>
+                    <div>Name: <span className="font-semibold text-black">{selectedEntry.blockEngineerName || "N/A"}</span></div>
+                    <div>Phone: <span className="font-semibold text-black">{selectedEntry.blockEngineerPhone || "N/A"}</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-neutral-200 bg-neutral-50 flex justify-end gap-2">
+              <button 
+                onClick={() => { handleEdit(selectedEntry); setSelectedEntry(null); }}
+                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-800 text-xs font-semibold rounded cursor-pointer"
+              >
+                Edit Details
+              </button>
+              <button 
+                onClick={() => setSelectedEntry(null)}
+                className="px-3 py-1.5 border border-neutral-300 hover:bg-neutral-100 text-xs font-semibold rounded text-black bg-white cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1035,6 +1217,7 @@ export function StockRegisterView({
   onNavigate: (tab: string) => void;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form states
   const [inBarrel, setInBarrel] = useState(0);
@@ -1056,15 +1239,22 @@ export function StockRegisterView({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingId) return;
-    await onUpdateStockItem(editingId, {
-      inBarrel: Number(inBarrel),
-      inKg: Number(inKg),
-      inTonne: Number(inTonne),
-      usedInTonne: Number(usedInTonne)
-    });
-    setEditingId(null);
-    onRefresh();
+    if (!editingId || isSaving) return;
+    setIsSaving(true);
+    try {
+      await onUpdateStockItem(editingId, {
+        inBarrel: Number(inBarrel),
+        inKg: Number(inKg),
+        inTonne: Number(inTonne),
+        usedInTonne: Number(usedInTonne)
+      });
+      setEditingId(null);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const clearForm = () => {
@@ -1176,9 +1366,10 @@ export function StockRegisterView({
             </button>
             <button 
               type="submit"
-              className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer"
+              disabled={isSaving}
+              className="px-3 py-1.5 bg-black text-white hover:bg-neutral-850 text-xs font-semibold rounded cursor-pointer disabled:opacity-50"
             >
-              Update
+              {isSaving ? "Saving..." : "Update"}
             </button>
             <button 
               type="button" onClick={clearForm}
@@ -1828,6 +2019,8 @@ export function PrivateWorkView({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedPrivateWork, setSelectedPrivateWork] = useState<PrivateWork | null>(null);
 
   // States
   const [workName, setWorkName] = useState("");
@@ -1860,28 +2053,36 @@ export function PrivateWorkView({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      workName,
-      approxAmount: Number(approxAmount),
-      location,
-      relatedToContractWork,
-      siteVisitDate,
-      roadWorkNature,
-      completedDate,
-      advanceReceived: Number(advanceReceived),
-      approxFinalWorkAmount: Number(approxFinalWorkAmount),
-      paymentReceived: Number(paymentReceived),
-      remarks
-    };
-    if (editingId) {
-      await onUpdatePrivateWork(editingId, payload);
-    } else {
-      await onCreatePrivateWork(payload);
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        workName,
+        approxAmount: Number(approxAmount),
+        location,
+        relatedToContractWork,
+        siteVisitDate,
+        roadWorkNature,
+        completedDate,
+        advanceReceived: Number(advanceReceived),
+        approxFinalWorkAmount: Number(approxFinalWorkAmount),
+        paymentReceived: Number(paymentReceived),
+        remarks
+      };
+      if (editingId) {
+        await onUpdatePrivateWork(editingId, payload);
+      } else {
+        await onCreatePrivateWork(payload);
+      }
+      clearForm();
+      setEditingId(null);
+      setShowForm(false);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
     }
-    clearForm();
-    setEditingId(null);
-    setShowForm(false);
-    onRefresh();
   };
 
   const handleEdit = (w: PrivateWork) => {
@@ -2025,7 +2226,13 @@ export function PrivateWorkView({
           <div className="flex gap-2 justify-end border-t border-neutral-100 pt-3">
             <button type="button" onClick={clearForm} className="px-3 py-1.5 border border-neutral-200 hover:bg-neutral-50 text-xs font-semibold rounded">Clear</button>
             <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="px-3 py-1.5 border border-neutral-200 hover:bg-neutral-50 text-xs font-semibold rounded">Cancel</button>
-            <button type="submit" className="px-3 py-1.5 bg-black text-white hover:bg-neutral-900 text-xs font-semibold rounded">{editingId ? "Update" : "Save"}</button>
+            <button 
+              type="submit" 
+              disabled={isSaving}
+              className="px-3 py-1.5 bg-black text-white hover:bg-neutral-900 text-xs font-semibold rounded disabled:opacity-50"
+            >
+              {isSaving ? "Saving..." : (editingId ? "Update" : "Save")}
+            </button>
           </div>
         </form>
       )}
@@ -2060,7 +2267,14 @@ export function PrivateWorkView({
             <tbody className="divide-y divide-neutral-100">
               {filtered.map(w => (
                 <tr key={w.id} className="hover:bg-neutral-50/50">
-                  <td className="p-3 font-bold">{w.workName}</td>
+                  <td className="p-3 font-bold">
+                    <button 
+                      onClick={() => setSelectedPrivateWork(w)}
+                      className="font-bold text-black hover:underline text-left cursor-pointer focus:outline-none bg-transparent border-none p-0"
+                    >
+                      {w.workName}
+                    </button>
+                  </td>
                   <td className="p-3">{w.location}</td>
                   <td className="p-3">{w.roadWorkNature}</td>
                   <td className="p-3 text-right font-mono">₹{w.approxAmount.toLocaleString()}</td>
@@ -2089,6 +2303,107 @@ export function PrivateWorkView({
           </table>
         </div>
       </div>
+      
+      {/* Detail Modal */}
+      {selectedPrivateWork && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-xs">
+          <div className="bg-white border border-neutral-300 w-full max-w-2xl rounded shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-neutral-200 bg-neutral-50 flex justify-between items-center">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Private Work details</span>
+                <h3 className="text-sm font-bold text-black uppercase mt-0.5">{selectedPrivateWork.workName}</h3>
+              </div>
+              <button 
+                onClick={() => setSelectedPrivateWork(null)} 
+                className="p-1 hover:bg-neutral-200 rounded text-neutral-500 hover:text-black cursor-pointer bg-transparent border-none"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-6 text-xs text-neutral-700 text-left">
+              {/* General details */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-black border-b border-neutral-200 pb-1 mb-3">Work Overview</h4>
+                <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Location</span>
+                    <span className="font-semibold text-black">{selectedPrivateWork.location}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Nature of Work</span>
+                    <span className="font-semibold text-black">{selectedPrivateWork.roadWorkNature}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Related Government Contract</span>
+                    <span className="font-semibold text-black">{selectedPrivateWork.relatedToContractWork || "None"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Site Visit Date</span>
+                    <span className="font-mono font-semibold text-black">{formatDate(selectedPrivateWork.siteVisitDate)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial info */}
+              <div>
+                <h4 className="text-[10px] font-bold uppercase tracking-wider text-black border-b border-neutral-200 pb-1 mb-3">Financial Summary</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6">
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Estimated Amount</span>
+                    <span className="font-mono font-bold text-black">₹{selectedPrivateWork.approxAmount.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Final Valuation Amount</span>
+                    <span className="font-mono font-bold text-black">₹{selectedPrivateWork.approxFinalWorkAmount.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Advance Payment</span>
+                    <span className="font-mono font-semibold text-black">₹{selectedPrivateWork.advanceReceived.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Total Payments Received</span>
+                    <span className="font-mono font-semibold text-black">₹{selectedPrivateWork.paymentReceived.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Outstanding Balance</span>
+                    <span className="font-mono font-bold text-red-600">₹{selectedPrivateWork.paymentBalance.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-neutral-400 uppercase">Completion Date</span>
+                    <span className="font-mono font-semibold text-black">{formatDate(selectedPrivateWork.completedDate)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Remarks */}
+              {selectedPrivateWork.remarks && (
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase tracking-wider text-black border-b border-neutral-200 pb-1 mb-2">Remarks & Notes</h4>
+                  <p className="bg-neutral-50 border border-neutral-100 p-3 rounded text-neutral-600 italic whitespace-pre-wrap">
+                    {selectedPrivateWork.remarks}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-neutral-200 bg-neutral-50 flex justify-end gap-2">
+              <button 
+                onClick={() => { handleEdit(selectedPrivateWork); setSelectedPrivateWork(null); }}
+                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-800 text-xs font-semibold rounded cursor-pointer"
+              >
+                Edit Details
+              </button>
+              <button 
+                onClick={() => setSelectedPrivateWork(null)}
+                className="px-3 py-1.5 border border-neutral-300 hover:bg-neutral-100 text-xs font-semibold rounded text-black bg-white cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2450,6 +2765,7 @@ export function WorkBasedEntryView({
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleWorkSearch = (query: string) => {
     setSearchQuery(query);
@@ -2488,24 +2804,31 @@ export function WorkBasedEntryView({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedEntryId) return;
-    const payload = {
-      entryId: selectedEntryId,
-      itemSlNo,
-      itemName,
-      itemQuantity: Number(itemQuantity),
-      itemRateAsPerEstimate: Number(itemRateAsPerEstimate),
-      itemUnit
-    };
-    if (editingId) {
-      await onUpdateWorkBasedEntry(editingId, payload);
-    } else {
-      await onCreateWorkBasedEntry(payload);
+    if (!selectedEntryId || isSaving) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        entryId: selectedEntryId,
+        itemSlNo,
+        itemName,
+        itemQuantity: Number(itemQuantity),
+        itemRateAsPerEstimate: Number(itemRateAsPerEstimate),
+        itemUnit
+      };
+      if (editingId) {
+        await onUpdateWorkBasedEntry(editingId, payload);
+      } else {
+        await onCreateWorkBasedEntry(payload);
+      }
+      clearForm();
+      setEditingId(null);
+      setShowForm(false);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
     }
-    clearForm();
-    setEditingId(null);
-    setShowForm(false);
-    onRefresh();
   };
 
   const handleEdit = (wbe: WorkBasedEntry) => {
@@ -2612,7 +2935,13 @@ export function WorkBasedEntryView({
               <div className="flex justify-end gap-2 border-t border-neutral-50 pt-3">
                 <button type="button" onClick={clearForm} className="px-3 py-1 border border-neutral-200 text-xs rounded">Clear</button>
                 <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="px-3 py-1 border border-neutral-200 text-xs rounded">Cancel</button>
-                <button type="submit" className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-neutral-900">{editingId ? "Update" : "Save"}</button>
+                <button 
+                  type="submit" 
+                  disabled={isSaving}
+                  className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-neutral-900 disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : (editingId ? "Update" : "Save")}
+                </button>
               </div>
             </form>
           )}
@@ -3512,6 +3841,7 @@ export function ExpenseUpdationView({
   const [showForm, setShowForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const getLocalDateString = () => {
     const d = new Date();
@@ -3564,26 +3894,32 @@ export function ExpenseUpdationView({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedEntryId) return;
-    
-    const finalDescription = description === "Others" ? customDescription : description;
+    if (!selectedEntryId || isSaving) return;
+    setIsSaving(true);
+    try {
+      const finalDescription = description === "Others" ? customDescription : description;
 
-    const payload = {
-      workId: selectedEntryId,
-      date,
-      description: finalDescription,
-      amount: Number(amount)
-    };
+      const payload = {
+        workId: selectedEntryId,
+        date,
+        description: finalDescription,
+        amount: Number(amount)
+      };
 
-    if (editingId) {
-      await onUpdateExpense(editingId, payload);
-    } else {
-      await onCreateExpense(payload);
+      if (editingId) {
+        await onUpdateExpense(editingId, payload);
+      } else {
+        await onCreateExpense(payload);
+      }
+      clearForm();
+      setEditingId(null);
+      setShowForm(false);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
     }
-    clearForm();
-    setEditingId(null);
-    setShowForm(false);
-    onRefresh();
   };
 
   const handleEdit = (exp: Expense) => {
@@ -3734,7 +4070,13 @@ export function ExpenseUpdationView({
               <div className="flex justify-end gap-2 border-t border-neutral-50 pt-3">
                 <button type="button" onClick={clearForm} className="px-3 py-1 border border-neutral-200 text-xs rounded font-semibold text-neutral-700 bg-white hover:bg-neutral-50">Clear</button>
                 <button type="button" onClick={() => { setShowForm(false); setEditingId(null); }} className="px-3 py-1 border border-neutral-200 text-xs rounded font-semibold text-neutral-700 bg-white hover:bg-neutral-50">Cancel</button>
-                <button type="submit" className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-neutral-900 font-semibold">{editingId ? "Update" : "Save"}</button>
+                <button 
+                  type="submit" 
+                  disabled={isSaving}
+                  className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-neutral-900 font-semibold disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : (editingId ? "Update" : "Save")}
+                </button>
               </div>
             </form>
           )}

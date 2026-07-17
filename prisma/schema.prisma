@@ -13,12 +13,33 @@ generator client {
 // ── OTP (persisted in MongoDB — survives server restarts) ─────────────────────
 
 model Otp {
-  id        String   @id @default(cuid()) @map("_id")
-  email     String
-  otpCode   String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid()) @map("_id")
+  userId      String
+  channel     String   // "email" | "phone"
+  destination String
+  otpHash     String
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  createdAt   DateTime @default(now())
+  isUsed      Boolean  @default(false)
+
+  @@index([expiresAt], map: "expiresAt_ttl")
 }
+
+model User {
+  id                 String   @id @default(cuid()) @map("_id")
+  email              String   @unique
+  name               String
+  role               String   @default("ADMIN")
+  password           String
+  phoneNumber        String?  @unique
+  isPhoneVerified    Boolean  @default(false)
+  preferredOtpMethod String   @default("email")
+  lastOtpMethod      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────
 

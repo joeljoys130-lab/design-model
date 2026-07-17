@@ -1,6 +1,6 @@
 /* src/components/login-view.tsx */
-import { useState } from "react";
-import { Mail, Lock, ArrowRight, Building2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Mail, Lock, ArrowRight, Building2, Phone, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/router";
 
 interface LoginViewProps {
@@ -9,24 +9,72 @@ interface LoginViewProps {
 
 export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const router = useRouter();
+  const otpInputRef = useRef<HTMLInputElement>(null);
 
   /* ── state ─────────────────────────────────────────────────────── */
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const [step, setStep]   = useState<"login" | "otp">("login");
+  const [step, setStep] = useState<"login" | "select-method" | "otp">("login");
   const [email, setEmail] = useState("");
-  const [otp, setOtp]     = useState("");
+  const [userInfo, setUserInfo] = useState<{
+    id: string;
+    email: string;
+    phoneNumber?: string | null;
+    preferredOtpMethod?: 'email' | 'phone';
+    isPhoneVerified?: boolean;
+  } | null>(null);
+
+  const [selectedMethod, setSelectedMethod] = useState<'email' | 'phone'>('email');
+  const [otp, setOtp] = useState("");
+  const [timer, setTimer] = useState(0);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
+
+  /* ── timer effect ──────────────────────────────────────────────── */
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  /* ── auto-focus effect ─────────────────────────────────────────── */
+  useEffect(() => {
+    if (step === "otp") {
+      setTimeout(() => {
+        otpInputRef.current?.focus();
+      }, 100);
+    }
+  }, [step]);
+
+  /* ── masking helpers ───────────────────────────────────────────── */
+  function maskEmail(emailStr: string): string {
+    if (!emailStr) return '';
+    const [name, domain] = emailStr.split('@');
+    if (!name || !domain) return emailStr;
+    if (name.length <= 2) return `${name}***@${domain}`;
+    return `${name.substring(0, 2)}***@${domain}`;
+  }
+
+  function maskPhone(phoneStr: string): string {
+    if (!phoneStr) return '';
+    const cleaned = phoneStr.trim();
+    if (cleaned.length < 7) return '******';
+    const countryCodeLength = cleaned.startsWith('+') ? 3 : 0;
+    const prefix = cleaned.substring(0, countryCodeLength + 2);
+    const suffix = cleaned.substring(cleaned.length - 4);
+    return `${prefix} ******${suffix}`;
+  }
 
   /* ── helpers ────────────────────────────────────────────────────── */
   async function doLogin(u: string, p: string) {
     setLoading(true);
     setError("");
     try {
-      const loginRes  = await fetch("/api/auth/login", {
+      const loginRes = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -39,15 +87,10 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         return;
       }
 
+      setUserInfo(loginData.user);
       setEmail(loginData.user.email);
-
-      await fetch("/api/request-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginData.user.email }),
-      });
-
-      setStep("otp");
+      setSelectedMethod(loginData.user.preferredOtpMethod === 'phone' && loginData.user.phoneNumber ? 'phone' : 'email');
+      setStep("select-method");
     } catch {
       setError("Login failed. Please try again.");
     } finally {
@@ -55,15 +98,49 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     }
   }
 
-  async function resendOtp() {
+  async function sendOtp() {
+    if (!email) return;
     setLoading(true);
+    setError("");
     try {
-      await fetch("/api/request-otp", {
+      const res = await fetch("/api/request-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, method: selectedMethod }),
       });
-    } catch { /* silent */ } finally {
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error ?? "Failed to send OTP.");
+        return;
+      }
+      setTimer(30); // 30-second cooldown
+      setStep("otp");
+    } catch {
+      setError("Failed to request OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resendOtp() {
+    if (timer > 0 || loading) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/request-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, method: selectedMethod }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error ?? "Failed to resend OTP.");
+        return;
+      }
+      setTimer(30);
+    } catch {
+      setError("Failed to resend OTP.");
+    } finally {
       setLoading(false);
     }
   }
@@ -79,16 +156,15 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     setLoading(true);
     setError("");
     try {
-      const res  = await fetch("/api/verify-otp", {
+      const res = await fetch("/api/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, otp }),
+        body: JSON.stringify({ email, otp, method: selectedMethod }),
       });
       const data = await res.json();
       if (data.success) {
         onLoginSuccess(data.user);
-        router.push("/");
       } else {
         setError(data.error ?? "Invalid OTP");
       }
@@ -99,13 +175,19 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedData = e.clipboardData.getData("Text").trim();
+    if (/^\d{6}$/.test(pastedData)) {
+      setOtp(pastedData);
+    }
+  };
+
   /* ── render ─────────────────────────────────────────────────────── */
   return (
     <div className="min-h-screen flex bg-white text-black font-sans">
 
       {/* ── Left panel (brand) ── */}
       <div className="hidden lg:flex w-[420px] shrink-0 bg-black text-white flex-col justify-between p-12 border-r border-neutral-800">
-        {/* Logo / brand */}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 border border-white flex items-center justify-center font-bold text-sm">
             A
@@ -115,7 +197,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </span>
         </div>
 
-        {/* Centre copy */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-4">
             <Building2 className="w-5 h-5 text-neutral-400" />
@@ -131,7 +212,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </p>
         </div>
 
-        {/* Footer note */}
         <p className="text-xs text-neutral-600 tracking-wide">
           Secured with OTP authentication
         </p>
@@ -153,15 +233,17 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             {/* Header */}
             <div className="border-b border-neutral-100 pb-5">
               <p className="text-[10px] uppercase tracking-widest font-bold text-neutral-400 mb-1">
-                {step === "login" ? "Sign in" : "Verify OTP"}
+                {step === "login" ? "Sign in" : step === "select-method" ? "Verification Method" : "Verify OTP"}
               </p>
               <h2 className="text-2xl font-bold tracking-tight">
-                {step === "login" ? "Welcome back" : "Check your email"}
+                {step === "login" ? "Welcome back" : step === "select-method" ? "Choose OTP Delivery" : "Enter Verification Code"}
               </h2>
               <p className="text-sm text-neutral-500 mt-1">
                 {step === "login"
                   ? "Enter your credentials to continue."
-                  : <>OTP sent to <span className="font-semibold text-black">{email}</span></>
+                  : step === "select-method"
+                  ? "Select where you would like to receive your login code."
+                  : <>OTP sent to your <span className="font-semibold text-black">{selectedMethod === 'email' ? 'email' : 'mobile number'}</span></>
                 }
               </p>
             </div>
@@ -174,9 +256,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             )}
 
             {/* ── Login form ── */}
-            {step === "login" ? (
+            {step === "login" && (
               <form onSubmit={handleLogin} className="space-y-4">
-                {/* Username */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1.5">
                     Username / Email
@@ -196,7 +277,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   </div>
                 </div>
 
-                {/* Password */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1.5">
                     Password
@@ -216,7 +296,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   </div>
                 </div>
 
-                {/* Submit */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -225,27 +304,106 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   {loading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <>Sign In <ArrowRight className="w-4 h-4" /></>
+                    <>Continue <ArrowRight className="w-4 h-4" /></>
                   )}
                 </button>
               </form>
+            )}
 
-            ) : (
-              /* ── OTP form ── */
+            {/* ── Method Selection form ── */}
+            {step === "select-method" && userInfo && (
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 p-3.5 border rounded cursor-pointer transition-colors hover:bg-neutral-50 border-neutral-200">
+                    <input
+                      type="radio"
+                      name="otp-method"
+                      value="email"
+                      checked={selectedMethod === 'email'}
+                      onChange={() => setSelectedMethod('email')}
+                      className="mt-1 accent-black"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 font-semibold text-sm text-black">
+                        <Mail className="w-4 h-4 text-neutral-500" />
+                        Email OTP
+                      </div>
+                      <div className="text-xs text-neutral-400 mt-0.5">
+                        Send OTP to {maskEmail(userInfo.email)}
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 p-3.5 border rounded transition-colors ${
+                    userInfo.phoneNumber 
+                      ? "cursor-pointer hover:bg-neutral-50 border-neutral-200" 
+                      : "opacity-50 cursor-not-allowed border-neutral-100"
+                  }`}>
+                    <input
+                      type="radio"
+                      name="otp-method"
+                      value="phone"
+                      disabled={!userInfo.phoneNumber}
+                      checked={selectedMethod === 'phone'}
+                      onChange={() => setSelectedMethod('phone')}
+                      className="mt-1 accent-black"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 font-semibold text-sm text-black">
+                        <Phone className="w-4 h-4 text-neutral-500" />
+                        Mobile Phone OTP
+                      </div>
+                      <div className="text-xs text-neutral-400 mt-0.5">
+                        {userInfo.phoneNumber 
+                          ? `Send OTP to ${maskPhone(userInfo.phoneNumber)}`
+                          : "No verified phone number registered."
+                        }
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                <button
+                  onClick={sendOtp}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-black text-white text-sm font-bold rounded hover:bg-neutral-800 disabled:opacity-50 transition-colors cursor-pointer mt-2"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>Send OTP <ArrowRight className="w-4 h-4" /></>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setStep("login"); setError(""); }}
+                  className="text-xs text-neutral-500 hover:text-black underline transition-colors cursor-pointer block text-center w-full"
+                >
+                  ← Back to credentials
+                </button>
+              </div>
+            )}
+
+            {/* ── OTP form ── */}
+            {step === "otp" && (
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1.5">
                     One-Time Password
                   </label>
                   <input
+                    ref={otpInputRef}
                     type="text"
                     required
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
+                    onPaste={handlePaste}
                     className="w-full px-3 py-3 border border-neutral-200 bg-white rounded text-xl font-mono tracking-[0.4em] text-center focus:outline-none focus:border-black transition-colors text-black"
                     placeholder="------"
                     maxLength={6}
                     inputMode="numeric"
+                    autoFocus
                   />
                 </div>
 
@@ -264,18 +422,18 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                 <div className="flex items-center justify-between pt-1">
                   <button
                     type="button"
-                    onClick={() => { setStep("login"); setOtp(""); setError(""); }}
+                    onClick={() => { setStep("select-method"); setOtp(""); setError(""); }}
                     className="text-xs text-neutral-500 hover:text-black underline transition-colors cursor-pointer"
                   >
-                    ← Back to login
+                    ← Change delivery method
                   </button>
                   <button
                     type="button"
-                    disabled={loading}
+                    disabled={loading || timer > 0}
                     onClick={resendOtp}
-                    className="text-xs text-neutral-500 hover:text-black underline transition-colors cursor-pointer disabled:opacity-50"
+                    className="text-xs text-neutral-500 hover:text-black underline transition-colors cursor-pointer disabled:opacity-50 disabled:no-underline"
                   >
-                    Resend OTP
+                    {timer > 0 ? `Resend OTP in ${timer}s` : "Resend OTP"}
                   </button>
                 </div>
               </form>
@@ -283,7 +441,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
           </div>
 
-          {/* Footer */}
           <p className="text-center text-xs text-neutral-400 mt-6">
             BuildCorp ERP · Construction Management Platform
           </p>

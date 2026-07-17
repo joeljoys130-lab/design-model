@@ -4,8 +4,8 @@ import { useRouter } from 'next/router';
 export default function LoginPage() {
   const router = useRouter();
   const handleSuccess = (user: any) => {
-    // In this mock, simply redirect after successful login
-    router.push('/dashboard');
+    // Redirect directly to the dashboard root and replace history
+    router.replace('/');
   };
 
   return <LoginView onLoginSuccess={handleSuccess} />;
