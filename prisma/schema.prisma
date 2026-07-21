@@ -113,6 +113,7 @@ model Entry {
   agreementNo                      String
   siteHandoverDate                 DateTime
   workCompletionDateAsPerAgreement DateTime
+  actualCompletionDate             DateTime?
   wardMemberName                   String?
   wardMemberPhone                  String?
   overseerName                     String?

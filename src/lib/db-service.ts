@@ -239,7 +239,7 @@ class DbService {
     data: Omit<Entry, 'id' | 'createdAt' | 'updatedAt'>,
     ownerEmail: string,
   ): Promise<Entry> {
-    const parsed = parseDates(data, ['lastDateToExecuteAgreement', 'siteHandoverDate', 'workCompletionDateAsPerAgreement']);
+    const parsed = parseDates(data, ['lastDateToExecuteAgreement', 'siteHandoverDate', 'workCompletionDateAsPerAgreement', 'actualCompletionDate']);
     return writeDb(() => prisma.entry.create({
       data: { ...parsed, ownerEmail } as any,
     })) as unknown as Promise<Entry>;
@@ -253,7 +253,7 @@ class DbService {
     return writeDb(async () => {
       const exists = await prisma.entry.findFirst({ where: { id, ownerEmail } });
       if (!exists) return null;
-      const parsedUpdates = parseDates(updates, ['lastDateToExecuteAgreement', 'siteHandoverDate', 'workCompletionDateAsPerAgreement']);
+      const parsedUpdates = parseDates(updates, ['lastDateToExecuteAgreement', 'siteHandoverDate', 'workCompletionDateAsPerAgreement', 'actualCompletionDate']);
       return prisma.entry.update({ where: { id }, data: parsedUpdates as any });
     }) as unknown as Promise<Entry | null>;
   }

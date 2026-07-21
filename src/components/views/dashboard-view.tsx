@@ -32,6 +32,7 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
   } = data;
 
   const [selectedKpi, setSelectedKpi] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("All");
 
   const totalCementBags = cementLoads.reduce((sum, item) => sum + item.loadInBags, 0);
   const totalTarKg = tarLoads.reduce((sum, item) => sum + item.quantityInKg, 0);
@@ -233,7 +234,7 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                 <p className="text-xs text-neutral-400">Detailed list and registry data overview</p>
               </div>
               <button 
-                onClick={() => setSelectedKpi(null)}
+                onClick={() => { setSelectedKpi(null); setStatusFilter("All"); }}
                 className="p-1.5 hover:bg-neutral-100 border border-neutral-200 rounded transition-colors text-black cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -243,70 +244,123 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
             {/* Modal Content */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
               
-              {/* ACTIVE WORKS / TOTAL WORKS */}
-              {(selectedKpi === "Active Works" || selectedKpi === "Total Works") && (
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Govt Contracts (Ongoing)</h4>
-                    {entries.filter(e => e.status !== "Completed").length === 0 ? (
-                      <p className="text-neutral-500 italic">No ongoing contracts found.</p>
-                    ) : (
-                      <div className="border border-neutral-200 rounded overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[600px]">
-                          <thead>
-                            <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
-                              <th className="p-3">Work Name</th>
-                              <th className="p-3">Office</th>
-                              <th className="p-3 text-right">Amount</th>
-                              <th className="p-3">Completion Date</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-neutral-200 font-mono">
-                            {entries.filter(e => e.status !== "Completed").map(e => (
-                              <tr key={e.id} className="hover:bg-neutral-50/50">
-                                <td className="p-3 font-bold font-sans">{e.workName}</td>
-                                <td className="p-3">{e.nameOfOffice}</td>
-                                <td className="p-3 text-right font-semibold">₹{formatNumber(e.amount)}</td>
-                                <td className="p-3">{new Date(e.workCompletionDateAsPerAgreement).toLocaleDateString()}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
+              {/* ACTIVE WORKS / TOTAL WORKS / WORKS COMPLETED */}
+              {(selectedKpi === "Active Works" || selectedKpi === "Total Works" || selectedKpi === "Works Completed") && (() => {
+                // Determine initial set based on KPI
+                let initialGovt = entries;
+                if (selectedKpi === "Active Works") {
+                  initialGovt = entries.filter(e => e.status !== "Completed");
+                } else if (selectedKpi === "Works Completed") {
+                  initialGovt = entries.filter(e => e.status === "Completed");
+                }
 
-                  <div>
-                    <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Private Works</h4>
-                    {privateWorks.length === 0 ? (
-                      <p className="text-neutral-500 italic">No private works found.</p>
-                    ) : (
-                      <div className="border border-neutral-200 rounded overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[600px]">
-                          <thead>
-                            <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
-                              <th className="p-3">Work Name</th>
-                              <th className="p-3">Location</th>
-                              <th className="p-3 text-right">Approx Amount</th>
-                              <th className="p-3">Completion Date</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-neutral-200 font-mono">
-                            {privateWorks.map(pw => (
-                              <tr key={pw.id} className="hover:bg-neutral-50/50">
-                                <td className="p-3 font-bold font-sans">{pw.workName}</td>
-                                <td className="p-3">{pw.location}</td>
-                                <td className="p-3 text-right font-semibold">₹{formatNumber(pw.approxFinalWorkAmount)}</td>
-                                <td className="p-3">{new Date(pw.completedDate).toLocaleDateString()}</td>
+                // Apply status filter
+                const filteredGovt = statusFilter === "All"
+                  ? initialGovt
+                  : entries.filter(e => e.status === statusFilter);
+
+                // Show private works only if not completed KPI and either All or Ongoing filter is selected
+                const showPrivate = (selectedKpi === "Active Works" || selectedKpi === "Total Works") && 
+                  (statusFilter === "All" || statusFilter === "Ongoing");
+
+                return (
+                  <div className="space-y-6">
+                    {/* Status Filter Selector */}
+                    <div className="flex items-center gap-3 bg-neutral-50 p-4 border border-neutral-200 rounded">
+                      <span className="text-[10px] uppercase font-bold text-neutral-500">Filter list by Status of Work:</span>
+                      <div className="flex gap-2">
+                        {["All", "Not Started", "Ongoing", "Pending", "Completed"].map((statusOption) => (
+                          <button
+                            key={statusOption}
+                            onClick={() => setStatusFilter(statusOption)}
+                            className={`px-2.5 py-1 border text-[10px] font-bold uppercase rounded transition-colors ${
+                              statusFilter === statusOption
+                                ? "bg-black text-white border-black"
+                                : "bg-white text-neutral-500 border-neutral-200 hover:border-neutral-400"
+                            }`}
+                          >
+                            {statusOption}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Govt Contracts Section */}
+                    <div>
+                      <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Govt Contracts ({statusFilter} Status)</h4>
+                      {filteredGovt.length === 0 ? (
+                        <p className="text-neutral-500 italic">No contracts found matching the status filter.</p>
+                      ) : (
+                        <div className="border border-neutral-200 rounded overflow-x-auto">
+                          <table className="w-full text-left border-collapse min-w-[700px]">
+                            <thead>
+                              <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                                <th className="p-3">Work Name</th>
+                                <th className="p-3">Office</th>
+                                <th className="p-3 text-right">Amount</th>
+                                <th className="p-3">Work Status</th>
+                                <th className="p-3">Work Completion as per Agreement</th>
+                                <th className="p-3">Actual Completion Date</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-200 font-mono">
+                              {filteredGovt.map(e => (
+                                <tr key={e.id} className="hover:bg-neutral-50/50">
+                                  <td className="p-3 font-bold font-sans">{e.workName}</td>
+                                  <td className="p-3">{e.nameOfOffice}</td>
+                                  <td className="p-3 text-right font-semibold">₹{formatNumber(e.amount)}</td>
+                                  <td className="p-3">
+                                    <span className="font-sans text-[10px] font-bold px-1.5 py-0.5 rounded border border-neutral-300 bg-neutral-50">
+                                      {e.status}
+                                    </span>
+                                  </td>
+                                  <td className="p-3">{new Date(e.workCompletionDateAsPerAgreement).toLocaleDateString()}</td>
+                                  <td className="p-3">{e.actualCompletionDate ? new Date(e.actualCompletionDate).toLocaleDateString() : "-"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Private Works Section */}
+                    {showPrivate && (
+                      <div>
+                        <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Private Works (Ongoing)</h4>
+                        {privateWorks.length === 0 ? (
+                          <p className="text-neutral-500 italic">No private works found.</p>
+                        ) : (
+                          <div className="border border-neutral-200 rounded overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[700px]">
+                              <thead>
+                                <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
+                                  <th className="p-3">Work Name</th>
+                                  <th className="p-3">Location</th>
+                                  <th className="p-3 text-right">Approx Amount</th>
+                                  <th className="p-3">Work Completion as per Agreement</th>
+                                  <th className="p-3">Actual Completion Date</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-neutral-200 font-mono">
+                                {privateWorks.map(pw => (
+                                  <tr key={pw.id} className="hover:bg-neutral-50/50">
+                                    <td className="p-3 font-bold font-sans">{pw.workName}</td>
+                                    <td className="p-3">{pw.location}</td>
+                                    <td className="p-3 text-right font-semibold">₹{formatNumber(pw.approxFinalWorkAmount)}</td>
+                                    <td className="p-3">{new Date(pw.completedDate).toLocaleDateString()}</td>
+                                    <td className="p-3">{pw.completionDate ? new Date(pw.completionDate).toLocaleDateString() : "-"}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* CONTRACT VALUE */}
               {selectedKpi === "Contract Value" && (
@@ -423,38 +477,7 @@ export default function DashboardView({ data, onNavigate }: DashboardViewProps) 
                 </div>
               )}
 
-              {/* WORKS COMPLETED */}
-              {selectedKpi === "Works Completed" && (
-                <div>
-                  <h4 className="font-bold uppercase text-[10px] tracking-wider text-neutral-400 mb-3">Completed Works Registry</h4>
-                  {entries.filter(e => e.status === "Completed").length === 0 ? (
-                    <p className="text-neutral-500 italic">No completed works found.</p>
-                  ) : (
-                    <div className="border border-neutral-200 rounded overflow-x-auto">
-                      <table className="w-full text-left border-collapse min-w-[600px]">
-                        <thead>
-                          <tr className="bg-neutral-50 border-b border-neutral-200 font-bold uppercase text-[9px] tracking-wider">
-                            <th className="p-3">Work Name</th>
-                            <th className="p-3">Office Name</th>
-                            <th className="p-3 text-right">Final Amount</th>
-                            <th className="p-3">Timeline Completion</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-neutral-200 font-mono">
-                          {entries.filter(e => e.status === "Completed").map(e => (
-                            <tr key={e.id} className="hover:bg-neutral-50/50">
-                              <td className="p-3 font-bold font-sans">{e.workName}</td>
-                              <td className="p-3">{e.nameOfOffice}</td>
-                              <td className="p-3 text-right font-semibold">₹{formatNumber(e.amount)}</td>
-                              <td className="p-3">{new Date(e.workCompletionDateAsPerAgreement).toLocaleDateString()}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
+
 
               {/* TOTAL PORTFOLIO VALUATION */}
               {selectedKpi === "Total Portfolio Valuation" && (

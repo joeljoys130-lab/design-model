@@ -76,6 +76,7 @@ export interface Entry {
   agreementNo: string;
   siteHandoverDate: Date;
   workCompletionDateAsPerAgreement: Date;
+  actualCompletionDate?: Date | null;
   wardMemberName?: string;
   wardMemberPhone?: string;
   overseerName?: string;

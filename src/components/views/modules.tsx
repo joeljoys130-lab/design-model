@@ -1331,7 +1331,8 @@ export function StockRegisterView({
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">In Barrel</label>
               <input 
                 type="number" required value={inBarrel === 0 ? "" : inBarrel} onChange={(e) => setInBarrel(e.target.value === "" ? 0 : Number(e.target.value))}
-                className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
+                disabled={materialName === "Cement"}
+                className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white disabled:bg-neutral-100 disabled:cursor-not-allowed"
               />
             </div>
             <div>
@@ -1352,7 +1353,8 @@ export function StockRegisterView({
               <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Used In Tonne</label>
               <input 
                 type="number" required value={usedInTonne === 0 ? "" : usedInTonne} onChange={(e) => setUsedInTonne(e.target.value === "" ? 0 : Number(e.target.value))}
-                className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white"
+                disabled={materialName === "Cement"}
+                className="w-full px-3 py-1.5 border border-neutral-300 rounded text-xs focus:outline-none focus:border-black font-mono text-black bg-white disabled:bg-neutral-100 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -3577,6 +3579,7 @@ export function WorkStatusUpdationView({
   const [agreementNo, setAgreementNo] = useState("");
   const [siteHandoverDate, setSiteHandoverDate] = useState("");
   const [workCompletionDateAsPerAgreement, setWorkCompletionDateAsPerAgreement] = useState("");
+  const [actualCompletionDate, setActualCompletionDate] = useState("");
   const [status, setStatus] = useState<'Not Started' | 'Ongoing' | 'Pending' | 'Completed'>('Not Started');
   const [paymentReceived, setPaymentReceived] = useState(0);
 
@@ -3601,6 +3604,7 @@ export function WorkStatusUpdationView({
     setAgreementNo(entry.agreementNo);
     setSiteHandoverDate(formatDate(entry.siteHandoverDate));
     setWorkCompletionDateAsPerAgreement(formatDate(entry.workCompletionDateAsPerAgreement));
+    setActualCompletionDate(entry.actualCompletionDate ? formatDate(entry.actualCompletionDate) : "");
     setStatus(entry.status);
     setPaymentReceived(entry.paymentReceived || 0);
   };
@@ -3622,6 +3626,7 @@ export function WorkStatusUpdationView({
       agreementNo,
       siteHandoverDate,
       workCompletionDateAsPerAgreement,
+      actualCompletionDate: actualCompletionDate || null,
       status,
       paymentReceived: Number(paymentReceived)
     };
@@ -3767,6 +3772,13 @@ export function WorkStatusUpdationView({
               <input 
                 type="date" required value={workCompletionDateAsPerAgreement} onChange={(e) => setWorkCompletionDateAsPerAgreement(e.target.value)}
                 className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-neutral-500 mb-1">Actual Completion Date</label>
+              <input 
+                type="date" value={actualCompletionDate} onChange={(e) => setActualCompletionDate(e.target.value)}
+                className="w-full px-3 py-1.5 border border-neutral-200 rounded text-xs focus:outline-none focus:border-black"
               />
             </div>
             <div>
